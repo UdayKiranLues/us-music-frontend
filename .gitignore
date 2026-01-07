@@ -1,6 +1,9 @@
 # Backend folder (separate repo)
 backend/
 
+# Documentation
+*.md
+
 # Dependencies
 node_modules
 dist
