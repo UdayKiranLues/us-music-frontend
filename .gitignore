@@ -1,0 +1,14 @@
+# Backend folder (separate repo)
+backend/
+
+# Dependencies
+node_modules
+dist
+dist-ssr
+*.local
+.env
+.DS_Store
+
+# Editor
+.vscode
+.idea
