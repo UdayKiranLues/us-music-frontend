@@ -4,7 +4,7 @@ import Sidebar from './Sidebar';
 import Player from './Player';
 import KeyboardShortcutsHelp from '@/components/common/KeyboardShortcutsHelp';
 import { motion } from 'framer-motion';
-import logo from '@/assets/logo.png';
+import logo from '@/assets/us-logo.jpeg';
 
 const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
