@@ -7,6 +7,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     { name: 'Home', path: '/', icon: '🏠', ariaLabel: 'Navigate to Home' },
     { name: 'Search', path: '/search', icon: '🔍', ariaLabel: 'Navigate to Search' },
     { name: 'Library', path: '/library', icon: '📚', ariaLabel: 'Navigate to Library' },
+    { name: 'Podcasts', path: '/podcasts', icon: '🎙️', ariaLabel: 'Navigate to Podcasts' },
     { name: 'History', path: '/history', icon: '🕐', ariaLabel: 'Navigate to History' },
     { name: 'Favourites', path: '/favourites', icon: '❤️', ariaLabel: 'Navigate to Favourites' },
   ];

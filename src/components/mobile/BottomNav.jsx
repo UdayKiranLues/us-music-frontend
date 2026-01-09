@@ -12,10 +12,10 @@ export default function BottomNav() {
   const navigate = useNavigate();
 
   const navItems = [
-    { icon: Home, label: 'Home', path: '/' },
-    { icon: Search, label: 'Search', path: '/search' },
-    { icon: Library, label: 'Library', path: '/library' },
-    { icon: User, label: 'Profile', path: '/profile' },
+    { icon: Home, label: 'Home', path: '/', emoji: '🏠' },
+    { icon: Search, label: 'Search', path: '/search', emoji: '🔍' },
+    { icon: Library, label: 'Library', path: '/library', emoji: '📚' },
+    { icon: null, label: 'Podcasts', path: '/podcasts', emoji: '🎙️' },
   ];
 
   const isActive = (path) => {
@@ -71,13 +71,17 @@ export default function BottomNav() {
                 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 20 }}
               >
-                <Icon
-                  size={24}
-                  strokeWidth={active ? 2.5 : 2}
-                  className={`transition-colors ${
-                    active ? 'text-primary-400' : 'text-neutral-400'
-                  }`}
-                />
+                {Icon ? (
+                  <Icon
+                    size={24}
+                    strokeWidth={active ? 2.5 : 2}
+                    className={`transition-colors ${
+                      active ? 'text-primary-400' : 'text-neutral-400'
+                    }`}
+                  />
+                ) : (
+                  <span className="text-2xl">{item.emoji}</span>
+                )}
               </motion.div>
               
               {/* Label */}

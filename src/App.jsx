@@ -11,6 +11,8 @@ import Search from '@/pages/Search';
 import Library from '@/pages/Library';
 import History from '@/pages/History';
 import Favourites from '@/pages/Favourites';
+import Podcasts from '@/pages/Podcasts';
+import PodcastDetail from '@/pages/PodcastDetail';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import Dashboard from '@/pages/admin/Dashboard';
@@ -41,6 +43,8 @@ function AppContent() {
           <Route path="library" element={<Library />} />
           <Route path="history" element={<History />} />
           <Route path="favourites" element={<Favourites />} />
+          <Route path="podcasts" element={<Podcasts />} />
+          <Route path="podcasts/:id" element={<PodcastDetail />} />
         </Route>
 
         {/* Admin Routes - Protected */}

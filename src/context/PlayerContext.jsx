@@ -13,7 +13,18 @@ export const usePlayer = () => {
 };
 
 export function PlayerProvider({ children }) {
+  // Song playback
   const [currentSong, setCurrentSong] = useState(null);
+  
+  // Podcast playback
+  const [currentPodcast, setCurrentPodcast] = useState(null);
+  const [currentEpisode, setCurrentEpisode] = useState(null);
+  const [episodeResumePositions, setEpisodeResumePositions] = useState({}); // Track resume position per episode
+  
+  // Content type flag
+  const [contentType, setContentType] = useState('song'); // 'song' | 'podcast'
+  
+  // Common playback state
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -373,7 +384,23 @@ export function PlayerProvider({ children }) {
   }, []);
 
   const value = {
+    // Song playback
     currentSong,
+    setCurrentSong,
+    
+    // Podcast playback
+    currentPodcast,
+    setCurrentPodcast,
+    currentEpisode,
+    setCurrentEpisode,
+    episodeResumePositions,
+    setEpisodeResumePositions,
+    
+    // Content type
+    contentType,
+    setContentType,
+    
+    // Common playback state
     isPlaying,
     currentTime,
     duration,
@@ -382,6 +409,7 @@ export function PlayerProvider({ children }) {
     currentIndex,
     isFullScreen,
     playSong,
+    playEpisode: playSong, // Reuse same play method
     togglePlayPause,
     seekTo,
     changeVolume,
