@@ -21,6 +21,10 @@ import Songs from '@/pages/admin/Songs';
 import Upload from '@/pages/admin/Upload';
 import Analytics from '@/pages/admin/Analytics';
 import Users from '@/pages/admin/Users';
+import RoleSelection from '@/components/auth/RoleSelection';
+import ArtistDashboard from '@/pages/artist/Dashboard';
+import CreatePodcast from '@/pages/artist/CreatePodcast';
+import CreateEpisode from '@/pages/artist/CreateEpisode';
 
 function AppContent() {
   // Enable global keyboard shortcuts
@@ -63,6 +67,23 @@ function AppContent() {
           <Route path="analytics" element={<Analytics />} />
           <Route path="users" element={<Users />} />
         </Route>
+
+        {/* Artist Routes - Protected */}
+        <Route
+          path="/artist"
+          element={
+            <ProtectedRoute requiredRole={['artist', 'podcaster']}>
+              <Layout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="dashboard" element={<ArtistDashboard />} />
+          <Route path="podcasts/new" element={<CreatePodcast />} />
+          <Route path="podcasts/:podcastId/new-episode" element={<CreateEpisode />} />
+        </Route>
+
+        {/* Role Selection - For users who just logged in */}
+        <Route path="/select-role" element={<RoleSelection />} />
 
         {/* Catch all - redirect to home */}
         <Route path="*" element={<Navigate to="/" replace />} />

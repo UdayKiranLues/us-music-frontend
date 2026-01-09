@@ -1,8 +1,11 @@
 import { NavLink } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '@/context/AuthContext';
 import logo from '@/assets/us-logo.jpeg';
 
 const Sidebar = ({ isOpen, onClose }) => {
+  const { isArtist } = useAuth();
+
   const navItems = [
     { name: 'Home', path: '/', icon: '🏠', ariaLabel: 'Navigate to Home' },
     { name: 'Search', path: '/search', icon: '🔍', ariaLabel: 'Navigate to Search' },
@@ -11,6 +14,11 @@ const Sidebar = ({ isOpen, onClose }) => {
     { name: 'History', path: '/history', icon: '🕐', ariaLabel: 'Navigate to History' },
     { name: 'Favourites', path: '/favourites', icon: '❤️', ariaLabel: 'Navigate to Favourites' },
   ];
+
+  // Add artist hub if user is an artist
+  if (isArtist()) {
+    navItems.push({ name: 'Artist Hub', path: '/artist/dashboard', icon: '🎬', ariaLabel: 'Navigate to Artist Hub' });
+  }
 
   return (
     <>

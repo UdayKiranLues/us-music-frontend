@@ -104,7 +104,10 @@ export function AuthProvider({ children }) {
       setUser(userData);
       setIsAuthenticated(true);
 
-      return { success: true, user: userData };
+      // Check if user needs to select a role
+      const needsRole = !userData?.role || userData.role === 'listener';
+
+      return { success: true, user: userData, needsRoleSelection: needsRole };
     } catch (error) {
       console.error('❌ Login failed:', error.response?.data);
       return {
@@ -214,10 +217,43 @@ export function AuthProvider({ children }) {
   };
 
   /**
-   * Check if user is artist
+   * Set user role (after registration or first login)
+   */
+  const setUserRole = async (role) => {
+    try {
+      console.log(`🎭 Setting user role to: ${role}`);
+      const response = await axios.put(`${API_URL}/api/v1/auth/set-role`, { role });
+
+      const updatedUser = response.data.data;
+
+      // Update localStorage
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+
+      // Update state
+      setUser(updatedUser);
+
+      return { success: true, user: updatedUser };
+    } catch (error) {
+      console.error('❌ Failed to set role:', error);
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to set role',
+      };
+    }
+  };
+
+  /**
+   * Check if user needs to select a role
+   */
+  const needsRoleSelection = () => {
+    return isAuthenticated && (!user?.role || user.role === 'listener');
+  };
+
+  /**
+   * Check if user is artist (including podcaster)
    */
   const isArtist = () => {
-    return user?.role === 'artist' || user?.role === 'admin';
+    return user?.role === 'artist' || user?.role === 'podcaster' || user?.role === 'admin';
   };
 
   const value = {
@@ -228,6 +264,8 @@ export function AuthProvider({ children }) {
     register,
     logout,
     updateProfile,
+    setUserRole,
+    needsRoleSelection,
     hasRole,
     isAdmin,
     isArtist,

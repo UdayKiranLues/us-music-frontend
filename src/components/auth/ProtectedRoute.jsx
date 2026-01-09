@@ -25,14 +25,21 @@ export default function ProtectedRoute({ children, requiredRole = null }) {
   }
 
   // Check role-based access
-  if (requiredRole && user?.role !== requiredRole) {
-    // Redirect non-admin users trying to access admin routes
-    if (requiredRole === 'admin') {
-      return <Navigate to="/" replace />;
-    }
+  if (requiredRole) {
+    // Support both string and array of allowed roles
+    const allowedRoles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
     
-    // Redirect non-artist users trying to access artist routes
-    if (requiredRole === 'artist' && user?.role !== 'artist') {
+    if (!allowedRoles.includes(user?.role)) {
+      // Redirect to appropriate fallback
+      if (requiredRole === 'admin' || allowedRoles.includes('admin')) {
+        return <Navigate to="/" replace />;
+      }
+      
+      // For artist/podcaster routes, redirect to role selection
+      if (allowedRoles.includes('artist') || allowedRoles.includes('podcaster')) {
+        return <Navigate to="/select-role" replace />;
+      }
+      
       return <Navigate to="/" replace />;
     }
   }
