@@ -4,7 +4,7 @@ import axios from 'axios';
 import SongCard from '@/components/common/SongCard';
 import SongList from '@/components/common/SongList';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || 'https://us-music-backend.vercel.app';
 
 const Home = () => {
   const [songs, setSongs] = useState([]);

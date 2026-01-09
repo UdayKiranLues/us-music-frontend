@@ -11,7 +11,7 @@ export const useAuth = () => {
   return context;
 };
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || 'https://us-music-backend.vercel.app';
 
 // Configure axios to send cookies with requests
 axios.defaults.withCredentials = true;

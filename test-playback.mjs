@@ -5,7 +5,7 @@
 
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api/v1';
+const API_URL = 'https://us-music-backend.vercel.app/api/v1';
 const FRONTEND_URL = 'http://localhost:5173';
 
 class PlaybackTester {

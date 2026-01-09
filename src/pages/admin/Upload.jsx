@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Upload as UploadIcon, X, CheckCircle, AlertCircle, Music, Image as ImageIcon } from 'lucide-react';
 import GlassCard from '@/components/admin/GlassCard';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || 'https://us-music-backend.vercel.app';
 
 const Upload = () => {
   const navigate = useNavigate();
