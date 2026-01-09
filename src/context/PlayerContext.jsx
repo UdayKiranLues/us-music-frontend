@@ -50,30 +50,62 @@ export function PlayerProvider({ children }) {
         throw new Error('No stream URL returned');
       }
 
-      // === VALIDATE STREAMING URL ===
-      const isProxyUrl = streamUrl.includes('localhost') || streamUrl.includes('127.0.0.1');
-      const isS3Url = streamUrl.includes('s3.amazonaws.com') || streamUrl.match(/s3\.[a-z0-9-]+\.amazonaws/);
-      const isCloudFront = streamUrl.includes('cloudfront.net');
+      // Normalize stream URL for production deployments.
+      // If backend returned a relative path or a localhost proxy URL (e.g. during dev),
+      // rewrite it to use the configured `VITE_API_URL` (or production fallback)
+      // so the HLS loader does not attempt to fetch from localhost.
+      const fallbackBase = import.meta.env.VITE_API_URL || 'https://us-music-backend.vercel.app';
+      let finalStreamUrl = streamUrl;
 
-      if (!isProxyUrl && !isCloudFront && !isS3Url) {
+      try {
+        // Relative path (starts with '/') -> prefix with backend base
+        if (finalStreamUrl.startsWith('/')) {
+          finalStreamUrl = `${fallbackBase}${finalStreamUrl}`;
+        } else {
+          const parsed = new URL(finalStreamUrl, fallbackBase);
+          // If the stream URL points to localhost, rewrite host to fallback base
+          if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') {
+            const pathAndSearch = parsed.pathname + (parsed.search || '');
+            finalStreamUrl = `${fallbackBase}${pathAndSearch}`;
+            console.warn('Rewrote localhost stream URL to backend base:', finalStreamUrl);
+          }
+        }
+      } catch (e) {
+        // If URL construction fails, keep the original streamUrl and continue
+        console.warn('Could not normalize stream URL, using original:', streamUrl, e.message);
+        finalStreamUrl = streamUrl;
+      }
+
+      // === VALIDATE STREAMING URL ===
+      // Use normalized URL for validation & playback
+      const isLocalProxy = finalStreamUrl.includes('localhost') || finalStreamUrl.includes('127.0.0.1');
+      const isBackendProxy = finalStreamUrl.includes('us-music-backend.vercel.app') || finalStreamUrl.includes('music-backend'); // Production or local backend
+      const isS3Url = finalStreamUrl.includes('s3.amazonaws.com') || finalStreamUrl.match(/s3\.[a-z0-9-]+\.amazonaws/);
+      const isCloudFront = finalStreamUrl.includes('cloudfront.net');
+      
+      // Valid: CloudFront (optimal), S3 (acceptable), backend proxy (fallback), or localhost (dev)
+      const isValidUrl = isCloudFront || isS3Url || isLocalProxy || isBackendProxy;
+
+      if (!isValidUrl) {
         console.error('❌ REJECTED: Invalid streaming URL');
-        console.error('   URL:', streamUrl.substring(0, 80) + '...');
+        console.error('   URL:', finalStreamUrl.substring(0, 80) + '...');
         throw new Error('Invalid streaming URL format');
       }
 
-      if (isProxyUrl) {
-        console.log('✅ Using backend proxy (no CORS issues)');
-      } else if (isS3Url && !isCloudFront) {
-        console.warn('⚠️  Using S3 URL (development fallback)');
-        console.warn('   Configure CloudFront for production!');
-      } else if (isCloudFront) {
-        console.log('✅ CloudFront URL validated');
+      if (isCloudFront) {
+        console.log('✅ CloudFront URL (optimal)');
+      } else if (isS3Url) {
+        console.warn('⚠️  Using S3 URL (CloudFront recommended)');
+      } else if (isBackendProxy) {
+        console.log('✅ Backend proxy endpoint');
+      } else if (isLocalProxy) {
+        console.log('✅ Using local backend proxy');
       }
 
-      console.log('   URL:', streamUrl.substring(0, 80) + '...');
+      console.log('   URL:', finalStreamUrl.substring(0, 80) + '...');
 
-      setStreamUrl(streamUrl);
-      return streamUrl;
+      setStreamUrl(finalStreamUrl);
+      return finalStreamUrl;
     } catch (error) {
       console.error('❌ Failed to fetch stream URL:', error.message);
       
