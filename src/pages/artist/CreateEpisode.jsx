@@ -1,9 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+import axios from '@/utils/axios';
 
 const CreateEpisode = () => {
   const { podcastId } = useParams();
@@ -68,7 +66,7 @@ const CreateEpisode = () => {
       mediaRecorderRef.current.stop();
       streamRef.current?.getTracks().forEach(track => track.stop());
       setIsRecording(false);
-      
+
       if (recordingTimerRef.current) {
         clearInterval(recordingTimerRef.current);
       }
@@ -120,7 +118,7 @@ const CreateEpisode = () => {
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    
+
     if (hrs > 0) {
       return `${hrs}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
     }
@@ -150,7 +148,7 @@ const CreateEpisode = () => {
       submitData.append('isDraft', isDraft);
 
       const response = await axios.post(
-        `${API_URL}/api/v1/artist/podcasts/${podcastId}/episodes`,
+        `/api/v1/artist/podcasts/${podcastId}/episodes`,
         submitData,
         {
           headers: {
@@ -203,22 +201,20 @@ const CreateEpisode = () => {
           <button
             onClick={() => setUploadMode('upload')}
             type="button"
-            className={`flex-1 px-4 py-3 rounded-lg font-semibold transition-all ${
-              uploadMode === 'upload'
+            className={`flex-1 px-4 py-3 rounded-lg font-semibold transition-all ${uploadMode === 'upload'
                 ? 'bg-accent-purple text-white'
                 : 'bg-white/5 text-gray-300 hover:bg-white/10'
-            }`}
+              }`}
           >
             📤 Upload File
           </button>
           <button
             onClick={() => setUploadMode('record')}
             type="button"
-            className={`flex-1 px-4 py-3 rounded-lg font-semibold transition-all ${
-              uploadMode === 'record'
+            className={`flex-1 px-4 py-3 rounded-lg font-semibold transition-all ${uploadMode === 'record'
                 ? 'bg-accent-purple text-white'
                 : 'bg-white/5 text-gray-300 hover:bg-white/10'
-            }`}
+              }`}
           >
             🎤 Record
           </button>

@@ -2,9 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Save, Upload as UploadIcon, Tag, Globe, Lock } from 'lucide-react';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+import axios from '@/utils/axios';
 
 const Publish = () => {
   const { type } = useParams(); // 'song' or 'podcast'
@@ -43,18 +41,41 @@ const Publish = () => {
     { code: 'zh', name: 'Chinese' },
   ];
 
+  const [myPodcasts, setMyPodcasts] = useState([]);
+  const [selectedPodcastId, setSelectedPodcastId] = useState('');
+
   useEffect(() => {
     if (!audioBlob) {
       // No recording data, redirect back
       navigate('/artist/record');
+      return;
     }
-  }, [audioBlob, navigate]);
+
+    if (type === 'podcast') {
+      const fetchMyPodcasts = async () => {
+        try {
+          const res = await axios.get(`/api/v1/artist/podcasts`, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          });
+          setMyPodcasts(res.data.data || []);
+          if (res.data.data?.length > 0) {
+            setSelectedPodcastId(res.data.data[0]._id);
+          }
+        } catch (err) {
+          console.error('❌ Failed to fetch podcasts:', err);
+        }
+      };
+      fetchMyPodcasts();
+    }
+  }, [audioBlob, navigate, type]);
 
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value, type: inputType, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: inputType === 'checkbox' ? checked : value
     }));
   };
 
@@ -69,26 +90,38 @@ const Publish = () => {
       return;
     }
 
+    if (type === 'podcast' && !selectedPodcastId) {
+      setError('Please select a podcast show');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     setIsDraft(draft);
 
     try {
       const formDataToSend = new FormData();
-      formDataToSend.append('audio', audioBlob, `${type}.${audioBlob.type.split('/')[1]}`);
+      formDataToSend.append('audio', audioBlob, `${type}.${audioBlob.type.split('/')[1] || 'webm'}`);
       formDataToSend.append('title', formData.title);
       formDataToSend.append('description', formData.description);
-      formDataToSend.append('category', formData.category);
+      if (formData.category) formDataToSend.append('category', formData.category);
       formDataToSend.append('keywords', JSON.stringify(formData.keywords));
       formDataToSend.append('language', formData.language);
       formDataToSend.append('explicit', formData.explicit);
-      formDataToSend.append('duration', duration);
+      formDataToSend.append('duration', Math.round(duration));
       formDataToSend.append('isDraft', draft);
 
-      const endpoint = type === 'song' ? '/api/v1/artist/songs' : '/api/v1/artist/podcasts/episodes';
-      const response = await axios.post(`${API_URL}${endpoint}`, formDataToSend, {
+      let endpoint = '';
+      if (type === 'song') {
+        endpoint = '/api/v1/artist/songs';
+      } else {
+        endpoint = `/api/v1/artist/podcasts/${selectedPodcastId}/episodes`;
+      }
+
+      const response = await axios.post(`${endpoint}`, formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
       });
 
@@ -103,7 +136,7 @@ const Publish = () => {
 
     } catch (err) {
       console.error('❌ Failed to publish:', err);
-      setError(err.response?.data?.message || 'Failed to publish. Please try again.');
+      setError(err.response?.data?.error || err.response?.data?.message || 'Failed to publish. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -171,6 +204,38 @@ const Publish = () => {
         className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8"
       >
         <form className="space-y-6">
+          {/* Podcast Show Selection */}
+          {type === 'podcast' && (
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">
+                Podcast Show *
+              </label>
+              {myPodcasts.length > 0 ? (
+                <select
+                  value={selectedPodcastId}
+                  onChange={(e) => setSelectedPodcastId(e.target.value)}
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-accent-purple focus:border-transparent"
+                >
+                  {myPodcasts.map(podcast => (
+                    <option key={podcast._id} value={podcast._id} className="bg-dark text-white">
+                      {podcast.title}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-yellow-500 text-sm">
+                  You haven't created any podcast shows yet.
+                  <button
+                    onClick={() => navigate('/artist/podcasts/new')}
+                    className="ml-1 underline font-bold"
+                  >
+                    Create one now
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Title */}
           <div>
             <label className="block text-sm font-medium text-white mb-2">
@@ -181,7 +246,7 @@ const Publish = () => {
               name="title"
               value={formData.title}
               onChange={handleInputChange}
-              placeholder={`Enter ${type} title`}
+              placeholder={`Enter episode title`}
               className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-purple focus:border-transparent"
               required
             />

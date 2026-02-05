@@ -1,10 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
-import { useAuth } from '@/context/AuthContext';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+import axios from '@/utils/axios';
 
 const ArtistDashboard = () => {
   const { user } = useAuth();
@@ -20,7 +17,7 @@ const ArtistDashboard = () => {
     const fetchData = async () => {
       try {
         // Fetch artist's podcasts
-        const podcastRes = await axios.get(`${API_URL}/api/v1/artist/podcasts`);
+        const podcastRes = await axios.get(`/api/v1/artist/podcasts`);
         setMyPodcasts(podcastRes.data.data || []);
         console.log('📻 Fetched my podcasts:', podcastRes.data.data);
       } catch (err) {
@@ -31,7 +28,7 @@ const ArtistDashboard = () => {
 
       try {
         // Fetch artist's songs
-        const songsRes = await axios.get(`${API_URL}/api/v1/artist/songs`);
+        const songsRes = await axios.get(`/api/v1/artist/songs`);
         setMySongs(songsRes.data.data || []);
         console.log('🎵 Fetched my songs:', songsRes.data.data);
       } catch (err) {
@@ -42,7 +39,7 @@ const ArtistDashboard = () => {
 
       try {
         // Fetch artist's albums
-        const albumsRes = await axios.get(`${API_URL}/api/v1/artist/albums`);
+        const albumsRes = await axios.get(`/api/v1/artist/albums`);
         setMyAlbums(albumsRes.data.data || []);
         console.log('💿 Fetched my albums:', albumsRes.data.data);
       } catch (err) {
@@ -194,17 +191,15 @@ const ArtistDashboard = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
-                activeTab === tab.id
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all duration-200 ${activeTab === tab.id
                   ? 'bg-white text-dark shadow-lg'
                   : 'text-gray-400 hover:text-white hover:bg-white/10'
-              }`}
+                }`}
             >
               <span>{tab.icon}</span>
               <span>{tab.label}</span>
-              <span className={`text-xs px-2 py-1 rounded-full ${
-                activeTab === tab.id ? 'bg-dark-lighter text-white' : 'bg-white/20 text-gray-300'
-              }`}>
+              <span className={`text-xs px-2 py-1 rounded-full ${activeTab === tab.id ? 'bg-dark-lighter text-white' : 'bg-white/20 text-gray-300'
+                }`}>
                 {tab.count}
               </span>
             </button>

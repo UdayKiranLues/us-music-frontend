@@ -14,15 +14,30 @@ const PodcastStudio = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
-  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [myPodcasts, setMyPodcasts] = useState([]);
+  const [selectedPodcastId, setSelectedPodcastId] = useState('');
+  const [loadingPodcasts, setLoadingPodcasts] = useState(false);
 
-  // Form data
-  const [formData, setFormData] = useState({
-    title: '',
-    category: 'Business',
-    keywords: [],
-    keywordInput: ''
-  });
+  // Fetch artist's podcasts on load
+  useEffect(() => {
+    const fetchMyPodcasts = async () => {
+      setLoadingPodcasts(true);
+      try {
+        const res = await axios.get('/api/v1/artist/podcasts');
+        setMyPodcasts(res.data.data || []);
+        if (res.data.data?.length > 0) {
+          setSelectedPodcastId(res.data.data[0]._id);
+        }
+      } catch (err) {
+        console.error('❌ Failed to fetch podcasts:', err);
+        showToast('Failed to load your podcasts', '❌');
+      } finally {
+        setLoadingPodcasts(false);
+      }
+    };
+
+    fetchMyPodcasts();
+  }, []);
 
   const mediaRecorderRef = useRef(null);
   const audioRef = useRef(null);
@@ -43,7 +58,7 @@ const PodcastStudio = () => {
       };
 
       mediaRecorderRef.current.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: 'audio/wav' });
+        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
         const url = URL.createObjectURL(blob);
         setAudioBlob(blob);
         setAudioUrl(url);
@@ -137,20 +152,26 @@ const PodcastStudio = () => {
       return;
     }
 
+    if (!selectedPodcastId) {
+      showToast('Please select a podcast show', '⚠️');
+      return;
+    }
+
     try {
       const formDataToSend = new FormData();
-      formDataToSend.append('audio', audioBlob, 'recording.wav');
+      formDataToSend.append('audio', audioBlob, 'recording.webm');
       formDataToSend.append('title', formData.title);
       formDataToSend.append('category', formData.category);
       formDataToSend.append('keywords', JSON.stringify(formData.keywords));
+      formDataToSend.append('duration', Math.round(duration));
 
-      const response = await axios.post(`/api/v1/podcasts`, formDataToSend, {
+      const response = await axios.post(`/api/v1/artist/podcasts/${selectedPodcastId}/episodes`, formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
 
-      showToast('Podcast published successfully!', '🎉');
+      showToast('Episode published successfully!', '🎉');
       setShowPublishModal(false);
 
       // Reset form
@@ -164,8 +185,8 @@ const PodcastStudio = () => {
       });
 
     } catch (error) {
-      console.error('Error publishing podcast:', error);
-      showToast('Failed to publish podcast', '❌');
+      console.error('Error publishing episode:', error);
+      showToast(error.response?.data?.error || 'Failed to publish episode', '❌');
     }
   };
 
@@ -313,10 +334,40 @@ const PodcastStudio = () => {
             </div>
 
             <div className="space-y-6">
+              {/* Podcast Show Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Podcast Show *
+                </label>
+                {myPodcasts.length > 0 ? (
+                  <select
+                    value={selectedPodcastId}
+                    onChange={(e) => setSelectedPodcastId(e.target.value)}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-accent-purple"
+                  >
+                    {myPodcasts.map(podcast => (
+                      <option key={podcast._id} value={podcast._id} className="bg-dark text-white">
+                        {podcast.title}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-yellow-500 text-sm">
+                    You haven't created any podcast shows yet.
+                    <button
+                      onClick={() => navigate('/artist/podcasts/new')}
+                      className="ml-1 underline font-bold"
+                    >
+                      Create one now
+                    </button>
+                  </div>
+                )}
+              </div>
+
               {/* Title */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Episode Title
+                  Episode Title *
                 </label>
                 <input
                   type="text"

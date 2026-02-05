@@ -1,9 +1,7 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+import axios from '@/utils/axios';
 
 const CreatePodcast = () => {
   const navigate = useNavigate();
@@ -129,13 +127,13 @@ const CreatePodcast = () => {
       submitData.append('keywords', JSON.stringify(formData.keywords));
       submitData.append('language', formData.language);
       submitData.append('explicit', formData.explicit);
-      
+
       if (formData.coverImage) {
         submitData.append('coverImage', formData.coverImage);
       }
 
       const response = await axios.post(
-        `${API_URL}/api/v1/artist/podcasts`,
+        `/api/v1/artist/podcasts`,
         submitData,
         {
           headers: {
@@ -279,11 +277,10 @@ const CreatePodcast = () => {
                   key={category}
                   type="button"
                   onClick={() => handleCategoryToggle(category)}
-                  className={`px-4 py-2 rounded-lg transition-all duration-200 text-sm font-medium ${
-                    formData.categories.includes(category)
+                  className={`px-4 py-2 rounded-lg transition-all duration-200 text-sm font-medium ${formData.categories.includes(category)
                       ? 'bg-accent-purple text-white'
                       : 'bg-white/5 hover:bg-white/10 text-gray-300'
-                  }`}
+                    }`}
                 >
                   {category}
                 </button>
