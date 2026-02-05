@@ -51,10 +51,17 @@ const PodcastCard = ({ podcast }) => {
               {title}
             </h3>
 
+            {/* Categories */}
+            {categories && categories.length > 0 && (
+              <p className="text-[10px] text-accent-orange/80 font-bold uppercase tracking-wider">
+                {categories.join(' • ')}
+              </p>
+            )}
+
             {/* Host */}
             <p className="text-xs text-gray-400 font-medium flex items-center gap-2">
-              <span className="text-base">🎤</span>
-              <span className="line-clamp-1">{host || 'Unknown Host'}</span>
+              <span className="text-sm">🎤</span>
+              <span className="line-clamp-1">{host || podcast.artist?.name || 'Unknown Host'}</span>
             </p>
 
             {/* Description */}

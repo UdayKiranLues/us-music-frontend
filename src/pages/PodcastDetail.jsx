@@ -9,7 +9,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const PodcastDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  
+
   const [podcast, setPodcast] = useState(null);
   const [episodes, setEpisodes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,7 +19,7 @@ const PodcastDetail = () => {
     const fetchPodcastAndEpisodes = async () => {
       try {
         setLoading(true);
-        
+
         // Fetch podcast details
         const podcastRes = await axios.get(`${API_URL}/api/v1/podcasts/${id}`);
         setPodcast(podcastRes.data.data);
@@ -99,7 +99,7 @@ const PodcastDetail = () => {
         className="relative overflow-hidden rounded-3xl p-8 md:p-12 glass-strong border border-white/10"
       >
         <div className="absolute inset-0 bg-gradient-to-br from-accent-blue/20 to-accent-purple/20 opacity-60" />
-        
+
         <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
           {/* Podcast Cover */}
           <motion.div
@@ -144,7 +144,7 @@ const PodcastDetail = () => {
               <span className="text-2xl">🎤</span>
               <div>
                 <p className="text-xs text-gray-400 uppercase tracking-wider">Hosted by</p>
-                <p className="text-lg font-semibold text-white">{podcast.host || 'Unknown'}</p>
+                <p className="text-lg font-semibold text-white">{podcast.host || podcast.artist?.name || 'Unknown'}</p>
               </div>
             </div>
 
@@ -159,19 +159,19 @@ const PodcastDetail = () => {
             <div className="flex gap-6 pt-4 border-t border-white/10">
               <div>
                 <p className="text-2xl font-bold text-accent-blue">
-                  {episodes.length}
+                  {podcast.episodeCount || 0}
                 </p>
                 <p className="text-xs text-gray-400 uppercase tracking-wider">
-                  Episode{episodes.length !== 1 ? 's' : ''}
+                  Episode{podcast.episodeCount !== 1 ? 's' : ''}
                 </p>
               </div>
-              {podcast.category && (
+              {podcast.categories && podcast.categories.length > 0 && (
                 <div>
                   <p className="text-lg font-semibold text-white">
-                    {podcast.category}
+                    {podcast.categories.join(', ')}
                   </p>
                   <p className="text-xs text-gray-400 uppercase tracking-wider">
-                    Category
+                    Categor{podcast.categories.length !== 1 ? 'ies' : 'y'}
                   </p>
                 </div>
               )}
