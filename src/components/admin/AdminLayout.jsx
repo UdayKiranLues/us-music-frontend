@@ -32,7 +32,7 @@ const AdminLayout = () => {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gradient-to-br from-dark via-dark-light to-dark-lighter">
+    <div className="flex h-screen bg-gradient-to-br from-dark via-dark-light to-dark-lighter">
       {/* Sidebar */}
       <aside
         className={`fixed top-0 left-0 z-40 h-screen transition-transform ${

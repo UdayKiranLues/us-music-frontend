@@ -1,9 +1,8 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload as UploadIcon, X, CheckCircle, AlertCircle, Music, Image as ImageIcon } from 'lucide-react';
+import axios from '@/utils/axios';
 import GlassCard from '@/components/admin/GlassCard';
-
-const API_URL = import.meta.env.VITE_API_URL || 'https://us-music-backend.vercel.app';
 
 const Upload = () => {
   const navigate = useNavigate();
@@ -84,63 +83,50 @@ const Upload = () => {
         formDataToSend.append('bpm', formData.bpm);
       }
 
-      // Upload with progress (cookies sent automatically)
-      const xhr = new XMLHttpRequest();
-
-      xhr.upload.addEventListener('progress', (e) => {
-        if (e.lengthComputable) {
-          const percentComplete = Math.round((e.loaded / e.total) * 100);
-          setUploadProgress(percentComplete);
-        }
+      // Upload with axios (Authorization header automatically included)
+      const response = await axios.post('/api/v1/upload/song-with-cover', formDataToSend, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            const percentComplete = Math.round((progressEvent.loaded / progressEvent.total) * 100);
+            setUploadProgress(percentComplete);
+          }
+        },
       });
 
-      xhr.addEventListener('load', () => {
-        if (xhr.status === 201) {
-          console.log('✅ Upload successful:', response);
-          setUploadStatus('success');
-          setUploadMessage(`Song "${formData.title}" uploaded successfully!`);
-          
-          // Reset form
-          setAudioFile(null);
-          setCoverFile(null);
-          setFormData({
-            title: '',
-            artist: '',
-            album: '',
-            genre: 'Pop',
-            language: 'English',
-            mood: '',
-            bpm: '',
-          });
-          
-          // Reset file inputs
-          if (audioInputRef.current) audioInputRef.current.value = '';
-          if (coverInputRef.current) coverInputRef.current.value = '';
-
-          // Navigate to Songs page after 2 seconds to show newly uploaded song
-          setTimeout(() => {
-            navigate('/admin/songs');
-          }, 2000);
-          if (coverInputRef.current) coverInputRef.current.value = '';
-        } else {
-          const error = JSON.parse(xhr.responseText);
-          throw new Error(error.message || 'Upload failed');
-        }
+      console.log('✅ Upload successful:', response.data);
+      setUploadStatus('success');
+      setUploadMessage(`Song "${formData.title}" uploaded successfully!`);
+      
+      // Reset form
+      setAudioFile(null);
+      setCoverFile(null);
+      setFormData({
+        title: '',
+        artist: '',
+        album: '',
+        genre: 'Pop',
+        language: 'English',
+        mood: '',
+        bpm: '',
       });
+      
+      // Reset file inputs
+      if (audioInputRef.current) audioInputRef.current.value = '';
+      if (coverInputRef.current) coverInputRef.current.value = '';
 
-      xhr.addEventListener('error', () => {
-        throw new Error('Network error during upload');
-      });
-
-      xhr.open('POST', `${API_URL}/api/v1/upload/song-with-cover`);
-      // Cookies are sent automatically with withCredentials
-      xhr.withCredentials = true;
-      xhr.send(formDataToSend);
+      // Navigate to Songs page after 2 seconds to show newly uploaded song
+      setTimeout(() => {
+        navigate('/admin/songs');
+      }, 2000);
 
     } catch (error) {
       console.error('Upload error:', error);
       setUploadStatus('error');
-      setUploadMessage(error.message || 'Upload failed. Please try again.');
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || 'Upload failed. Please try again.';
+      setUploadMessage(errorMessage);
     } finally {
       setUploading(false);
     }

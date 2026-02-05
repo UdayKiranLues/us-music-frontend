@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, useAnimation, PanInfo } from 'framer-motion';
 import { useSwipeable } from 'react-swipeable';
 import {
@@ -14,6 +14,7 @@ import {
   Volume2,
 } from 'lucide-react';
 import { mobile, colors, glassmorphism } from '../../styles/designTokens';
+import { useSongCoverUrl } from '@/hooks/useSongCoverUrl';
 
 /**
  * Mobile Full-Screen Player
@@ -36,6 +37,11 @@ export default function MobilePlayer({
   const [isDragging, setIsDragging] = useState(false);
   const controls = useAnimation();
   const constraintsRef = useRef(null);
+  const { coverUrl } = useSongCoverUrl(currentSong?._id);
+  
+  const displayCoverUrl = useMemo(() => {
+    return coverUrl || currentSong?.coverImageUrl || 'https://via.placeholder.com/400';
+  }, [coverUrl, currentSong?.coverImageUrl]);
 
   // Swipe handlers
   const swipeHandlers = useSwipeable({
@@ -117,9 +123,14 @@ export default function MobilePlayer({
           transition={{ type: 'spring', stiffness: 300, damping: 20 }}
         >
           <img
-            src={currentSong.coverImageUrl || 'https://via.placeholder.com/400'}
+            src={displayCoverUrl}
             alt={currentSong.title}
             className="w-full h-full object-cover"
+            onError={(e) => {
+              if (e.target.src !== 'https://via.placeholder.com/400') {
+                e.target.src = 'https://via.placeholder.com/400';
+              }
+            }}
           />
           
           {/* Gradient overlay */}

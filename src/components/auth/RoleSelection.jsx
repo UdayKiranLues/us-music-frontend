@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
 
 const RoleSelection = () => {
   const navigate = useNavigate();
   const { setUserRole, user } = useAuth();
-  const [selectedRole, setSelectedRole] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const { showToast } = useToast();
+  const [loading, setLoading] = useState(false);
 
   const roles = [
     {
@@ -19,43 +19,24 @@ const RoleSelection = () => {
       color: 'from-accent-orange to-accent-red',
     },
     {
-      id: 'podcaster',
-      label: 'Podcaster',
-      icon: '🎙️',
-      description: 'Create and publish your own podcast',
+      id: 'artist',
+      label: 'Artist / Singer',
+      icon: '🎤',
+      description: 'Create and share your music and podcasts',
       color: 'from-accent-blue to-accent-purple',
     },
   ];
 
-  const handleSelectRole = async (roleId) => {
-    if (isLoading) return;
-
-    setSelectedRole(roleId);
-    setIsLoading(true);
-    setError(null);
+  const handleSelectRole = async (role) => {
+    if (loading) return;
 
     try {
-      const result = await setUserRole(roleId);
-
-      if (result.success) {
-        console.log('✅ Role set successfully:', roleId);
-        
-        // Redirect based on role
-        if (roleId === 'podcaster') {
-          navigate('/artist/dashboard');
-        } else {
-          navigate('/');
-        }
-      } else {
-        setError(result.error || 'Failed to set role');
-        setSelectedRole(null);
-      }
+      setLoading(true);
+      await setUserRole(role, navigate);
     } catch (err) {
-      console.error('❌ Error setting role:', err);
-      setError('An error occurred. Please try again.');
-      setSelectedRole(null);
+      showToast("Failed to set role", "❌");
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -91,20 +72,14 @@ const RoleSelection = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 + index * 0.1 }}
               onClick={() => handleSelectRole(role.id)}
-              disabled={isLoading}
+              disabled={loading}
               className="relative group text-left"
             >
               {/* Card */}
-              <div className={`relative bg-gradient-to-br ${role.color} rounded-2xl p-0.5 overflow-hidden ${
-                selectedRole === role.id ? 'ring-2 ring-white/50' : ''
-              } transition-all duration-300 ${isLoading && selectedRole !== role.id ? 'opacity-50' : ''}`}>
+              <div className={`relative bg-gradient-to-br ${role.color} rounded-2xl p-0.5 overflow-hidden transition-all duration-300`}>
                 <div className="bg-gradient-to-br from-primary-dark to-dark rounded-2xl p-8 h-full flex flex-col justify-between">
                   {/* Icon */}
                   <motion.div
-                    animate={{ 
-                      scale: selectedRole === role.id ? 1.1 : 1,
-                      rotate: selectedRole === role.id ? 5 : 0
-                    }}
                     className="text-6xl mb-4"
                   >
                     {role.icon}
@@ -123,14 +98,10 @@ const RoleSelection = () => {
                   {/* Button */}
                   <motion.div
                     initial={{ opacity: 0 }}
-                    animate={{ opacity: selectedRole === role.id ? 1 : 0.7 }}
-                    className={`mt-6 px-6 py-3 rounded-lg font-semibold transition-all duration-300 ${
-                      selectedRole === role.id
-                        ? `bg-gradient-to-r ${role.color} text-white shadow-lg`
-                        : 'bg-white/10 text-white group-hover:bg-white/20'
-                    }`}
+                    animate={{ opacity: 1 }}
+                    className={`mt-6 px-6 py-3 rounded-lg font-semibold transition-all duration-300 bg-white/10 text-white group-hover:bg-white/20`}
                   >
-                    {selectedRole === role.id && isLoading ? (
+                    {loading ? (
                       <span className="flex items-center gap-2">
                         <motion.span animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity }}>
                           ⚙️
@@ -142,30 +113,10 @@ const RoleSelection = () => {
                     )}
                   </motion.div>
                 </div>
-
-                {/* Hover glow */}
-                <motion.div
-                  initial={false}
-                  animate={{
-                    opacity: selectedRole === role.id ? 0.3 : 0,
-                  }}
-                  className={`absolute inset-0 bg-gradient-to-br ${role.color} blur-xl -z-10`}
-                />
               </div>
             </motion.button>
           ))}
         </div>
-
-        {/* Error Message */}
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-red-500/10 border border-red-500/50 rounded-lg p-4 text-red-400 text-center mb-6"
-          >
-            {error}
-          </motion.div>
-        )}
 
         {/* Info Footer */}
         <motion.div

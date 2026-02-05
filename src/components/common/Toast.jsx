@@ -1,24 +1,4 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect } from 'react';
-
-let showToastFn = null;
-
-export const useToast = () => {
-  const [toast, setToast] = useState(null);
-
-  useEffect(() => {
-    showToastFn = (message, icon = '🎵') => {
-      setToast({ message, icon, id: Date.now() });
-      setTimeout(() => setToast(null), 2000);
-    };
-  }, []);
-
-  return { toast, showToast: (message, icon) => showToastFn?.(message, icon) };
-};
-
-export const showToast = (message, icon) => {
-  showToastFn?.(message, icon);
-};
 
 const Toast = ({ toast }) => {
   return (

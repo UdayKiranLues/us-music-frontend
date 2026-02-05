@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { usePlayer } from '@/context/PlayerContext';
-import { showToast } from '@/components/common/Toast';
+import { useToast } from '@/context/ToastContext';
 
 /**
  * Custom hook for global keyboard shortcuts
@@ -25,11 +25,13 @@ export const useKeyboardShortcuts = () => {
     // isFavorite,
   } = usePlayer();
 
+  const { showToast } = useToast();
+
   useEffect(() => {
     const handleKeyDown = (event) => {
       // Don't trigger shortcuts if user is typing in an input/textarea
       const activeElement = document.activeElement;
-      const isTyping = 
+      const isTyping =
         activeElement?.tagName === 'INPUT' ||
         activeElement?.tagName === 'TEXTAREA' ||
         activeElement?.isContentEditable;

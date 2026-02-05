@@ -1,11 +1,19 @@
 import { motion } from 'framer-motion';
 import { usePlayer } from '@/context/PlayerContext';
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
+import { useSongCoverUrl } from '@/hooks/useSongCoverUrl';
+import { getImageUrl } from '@/utils/imageUrl';
 
 const SongCard = memo(({ song, playlist = [], index = 0 }) => {
   const { playSong, currentSong, isPlaying, replaceQueue } = usePlayer();
+  const { coverUrl, error: coverError } = useSongCoverUrl(song._id);
 
   const isCurrentSong = currentSong?._id === song._id;
+
+  // Fallback to original URL or placeholder
+  const displayCoverUrl = useMemo(() => {
+    return getImageUrl(coverUrl || song.coverImageUrl) || 'https://via.placeholder.com/300';
+  }, [coverUrl, song.coverImageUrl]);
 
   const handlePlay = () => {
     if (isCurrentSong) {
@@ -52,15 +60,20 @@ const SongCard = memo(({ song, playlist = [], index = 0 }) => {
       {/* Cover Image with enhanced overlay */}
       <div className="relative mb-4 overflow-hidden rounded-xl shadow-lg">
         <img
-          src={song.coverImageUrl || 'https://via.placeholder.com/300'}
+          src={displayCoverUrl}
           alt={`${song.title} album cover`}
           className="w-full aspect-square object-cover transition-transform duration-500 group-hover:scale-110"
           loading="lazy"
+          onError={(e) => {
+            if (e.target.src !== 'https://via.placeholder.com/300') {
+              e.target.src = 'https://via.placeholder.com/300';
+            }
+          }}
         />
-        
+
         {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        
+
         {/* Play Button Overlay */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -85,7 +98,7 @@ const SongCard = memo(({ song, playlist = [], index = 0 }) => {
 
         {/* Currently Playing Indicator - Enhanced */}
         {isCurrentSong && (
-          <motion.div 
+          <motion.div
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             className="absolute top-3 right-3 bg-gradient-to-r from-accent-orange to-accent-red backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg"
@@ -115,7 +128,7 @@ const SongCard = memo(({ song, playlist = [], index = 0 }) => {
           {song.title}
         </h3>
         <p className="text-gray-400 text-sm truncate font-medium">{song.artist}</p>
-        
+
         <div className="flex items-center justify-between pt-1">
           <div className="flex items-center gap-2">
             <span className="badge text-[10px] bg-white/5 text-gray-400 border-white/10">

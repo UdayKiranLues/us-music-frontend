@@ -10,7 +10,7 @@ const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-premium overflow-hidden">
+    <div className="h-screen flex flex-col bg-gradient-premium">
       {/* Mobile Header */}
       <div className="lg:hidden flex items-center justify-between p-4 border-b border-white/10 bg-primary/50 backdrop-blur-xl">
         <button
@@ -28,7 +28,7 @@ const Layout = () => {
         <div className="w-8" />
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1">
         {/* Sidebar */}
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 

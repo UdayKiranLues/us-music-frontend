@@ -52,7 +52,7 @@ export function PlayerProvider({ children }) {
       console.log(`🔍 Fetching stream URL for song: ${songId}`);
 
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL || 'https://us-music-backend.vercel.app'}/api/v1/songs/${songId}/stream`
+        `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/v1/songs/${songId}/stream`
       );
 
       const { streamUrl } = response.data.data;
@@ -65,7 +65,7 @@ export function PlayerProvider({ children }) {
       // If backend returned a relative path or a localhost proxy URL (e.g. during dev),
       // rewrite it to use the configured `VITE_API_URL` (or production fallback)
       // so the HLS loader does not attempt to fetch from localhost.
-      const fallbackBase = import.meta.env.VITE_API_URL || 'https://us-music-backend.vercel.app';
+      const fallbackBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       let finalStreamUrl = streamUrl;
 
       try {
@@ -90,7 +90,7 @@ export function PlayerProvider({ children }) {
       // === VALIDATE STREAMING URL ===
       // Use normalized URL for validation & playback
       const isLocalProxy = finalStreamUrl.includes('localhost') || finalStreamUrl.includes('127.0.0.1');
-      const isBackendProxy = finalStreamUrl.includes('us-music-backend.vercel.app') || finalStreamUrl.includes('music-backend'); // Production or local backend
+      const isBackendProxy = finalStreamUrl.includes('us-music-backend.vercel.app') || finalStreamUrl.includes('localhost:5000') || finalStreamUrl.includes('music-backend'); // Production or local backend
       const isS3Url = finalStreamUrl.includes('s3.amazonaws.com') || finalStreamUrl.match(/s3\.[a-z0-9-]+\.amazonaws/);
       const isCloudFront = finalStreamUrl.includes('cloudfront.net');
       

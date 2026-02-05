@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Mail, Lock, User, Eye, EyeOff, Music, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
@@ -12,12 +12,16 @@ export default function Register() {
     email: '',
     password: '',
     confirmPassword: '',
+    role: '', // Add role field
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiError, setApiError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const [generatedUsername, setGeneratedUsername] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -52,6 +56,10 @@ export default function Register() {
       newErrors.confirmPassword = 'Passwords do not match';
     }
 
+    if (!formData.role) {
+      newErrors.role = 'Please select your role';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -64,6 +72,7 @@ export default function Register() {
     }
 
     setIsSubmitting(true);
+    setLoading(true);
     setApiError('');
 
     try {
@@ -71,18 +80,21 @@ export default function Register() {
         name: formData.name,
         email: formData.email,
         password: formData.password,
+        role: formData.role,
       });
       
       if (result.success) {
-        // Redirect to admin upload after successful registration
-        navigate('/admin/upload', { replace: true });
+        // Store the generated username and show success message
+        setGeneratedUsername(result.user.username);
+        setRegistrationSuccess(true);
       } else {
         setApiError(result.error || 'Registration failed. Please try again.');
       }
-    } catch (error) {
-      setApiError('An unexpected error occurred. Please try again.');
+    } catch (err) {
+      setApiError(err.message);
     } finally {
       setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
@@ -115,17 +127,46 @@ export default function Register() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-dark via-dark-light to-dark-lighter flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-accent-orange to-accent-red rounded-2xl mb-4">
-            <Music className="w-8 h-8 text-white" />
+        {registrationSuccess ? (
+          /* Success Message */
+          <div className="bg-dark-lighter/80 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl mb-6">
+              <CheckCircle className="w-8 h-8 text-white" />
+            </div>
+            <h1 className="text-3xl font-bold text-white mb-4">Welcome to US Music!</h1>
+            <p className="text-gray-400 mb-6">
+              Your account has been created successfully.
+            </p>
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-6">
+              <p className="text-sm text-gray-400 mb-1">Your username is:</p>
+              <p className="text-lg font-semibold text-accent-orange">@{generatedUsername}</p>
+            </div>
+            <button
+              onClick={() => {
+                if (formData.role === 'artist') {
+                  navigate('/artist/dashboard', { replace: true });
+                } else {
+                  navigate('/', { replace: true });
+                }
+              }}
+              className="w-full py-3 bg-gradient-to-r from-accent-orange to-accent-red text-white font-medium rounded-xl hover:shadow-lg hover:shadow-accent-orange/20 transition-all duration-300"
+            >
+              Get Started
+            </button>
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">Create Account</h1>
-          <p className="text-gray-400">Join US Music and start streaming</p>
-        </div>
+        ) : (
+          <>
+            {/* Logo */}
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-accent-orange to-accent-red rounded-2xl mb-4">
+                <Music className="w-8 h-8 text-white" />
+              </div>
+              <h1 className="text-3xl font-bold text-white mb-2">Create Account</h1>
+              <p className="text-gray-400">Join US Music and start streaming</p>
+            </div>
 
-        {/* Register Form */}
-        <div className="bg-dark-lighter/80 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
+            {/* Register Form */}
+            <div className="bg-dark-lighter/80 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
           {apiError && (
             <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl flex items-start space-x-3">
               <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
@@ -282,6 +323,69 @@ export default function Register() {
               )}
             </div>
 
+            {/* Role Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-4">
+                I want to join as a...
+              </label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Listener Option */}
+                <div
+                  onClick={() => setFormData(prev => ({ ...prev, role: 'listener' }))}
+                  className={`relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${
+                    formData.role === 'listener'
+                      ? 'border-accent-orange bg-accent-orange/10'
+                      : 'border-white/10 bg-white/5 hover:border-white/20'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-4 h-4 rounded-full border-2 ${
+                      formData.role === 'listener'
+                        ? 'border-accent-orange bg-accent-orange'
+                        : 'border-white/30'
+                    }`}>
+                      {formData.role === 'listener' && (
+                        <div className="w-full h-full rounded-full bg-white scale-50"></div>
+                      )}
+                    </div>
+                    <div>
+                      <div className="text-lg font-semibold text-white">👂 Listener</div>
+                      <div className="text-sm text-gray-400">Discover and enjoy music</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Artist Option */}
+                <div
+                  onClick={() => setFormData(prev => ({ ...prev, role: 'artist' }))}
+                  className={`relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${
+                    formData.role === 'artist'
+                      ? 'border-accent-blue bg-accent-blue/10'
+                      : 'border-white/10 bg-white/5 hover:border-white/20'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-4 h-4 rounded-full border-2 ${
+                      formData.role === 'artist'
+                        ? 'border-accent-blue bg-accent-blue'
+                        : 'border-white/30'
+                    }`}>
+                      {formData.role === 'artist' && (
+                        <div className="w-full h-full rounded-full bg-white scale-50"></div>
+                      )}
+                    </div>
+                    <div>
+                      <div className="text-lg font-semibold text-white">🎤 Artist / Singer</div>
+                      <div className="text-sm text-gray-400">Create and share music</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {errors.role && (
+                <p className="mt-2 text-sm text-red-400">{errors.role}</p>
+              )}
+            </div>
+
             {/* Terms Agreement */}
             <div className="flex items-start">
               <input
@@ -306,10 +410,10 @@ export default function Register() {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={loading}
               className="w-full py-3 bg-gradient-to-r from-accent-orange to-accent-red text-white font-medium rounded-xl hover:shadow-lg hover:shadow-accent-orange/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
             >
-              {isSubmitting ? (
+              {loading ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
                   <span>Creating account...</span>
@@ -333,6 +437,8 @@ export default function Register() {
             </p>
           </div>
         </div>
+        </>
+        )}
       </div>
     </div>
   );

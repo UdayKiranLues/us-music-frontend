@@ -59,15 +59,18 @@ export default function Login() {
     setApiError('');
 
     try {
-      const result = await login(formData.email, formData.password);
+      const result = await login(formData.email, formData.password, navigate);
       
       if (result.success) {
         // Check if user needs to select a role
         if (result.needsRoleSelection) {
           navigate('/select-role', { replace: true });
         } else {
-          // Redirect to intended page or admin upload
-          navigate(from, { replace: true });
+          // Navigation is now handled in AuthContext if redirectTo is present
+          // Otherwise, redirect to intended page or admin upload
+          if (!result.redirectTo) {
+            navigate(from, { replace: true });
+          }
         }
       } else {
         setApiError(result.error || 'Login failed. Please check your credentials.');

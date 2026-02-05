@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { getImageUrl } from '@/utils/imageUrl';
 
 const PodcastCard = ({ podcast }) => {
   const {
@@ -24,7 +25,7 @@ const PodcastCard = ({ podcast }) => {
           <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-primary-dark to-dark-lighter">
             {coverImage ? (
               <motion.img
-                src={coverImage}
+                src={getImageUrl(coverImage)}
                 alt={title}
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
               />
@@ -33,10 +34,10 @@ const PodcastCard = ({ podcast }) => {
                 <span className="text-5xl">🎙️</span>
               </div>
             )}
-            
+
             {/* Overlay Gradient */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            
+
             {/* Episode Count Badge */}
             <div className="absolute top-3 right-3 bg-accent-orange/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-bold text-white">
               {episodeCount} episodes

@@ -4,7 +4,7 @@ import GlassCard from '@/components/admin/GlassCard';
 import { usePlayer } from '@/context/PlayerContext';
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://us-music-backend.vercel.app';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const Songs = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -21,9 +21,11 @@ const Songs = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get(`${API_URL}/api/v1/songs`);
+      const response = await axios.get(`${API_URL}/api/v1/songs?limit=50`);
       console.log('📥 Admin Songs: Fetched songs:', response.data);
-      setSongs(response.data.data || []);
+      const fetchedSongs = response.data.data || [];
+      setSongs(fetchedSongs);
+      if (fetchedSongs.length === 0) console.log("BACKEND RETURNED EMPTY");
     } catch (err) {
       console.error('❌ Admin Songs: Failed to fetch songs:', err);
       setError('Failed to load songs. Please try again.');

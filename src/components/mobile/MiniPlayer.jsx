@@ -1,6 +1,8 @@
 import { Play, Pause, Heart } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { mobile } from '../../styles/designTokens';
+import { useMemo } from 'react';
+import { useSongCoverUrl } from '@/hooks/useSongCoverUrl';
 
 /**
  * Mobile Mini Player
@@ -15,6 +17,12 @@ export default function MiniPlayer({
   isFavorite = false,
   progress = 0,
 }) {
+  const { coverUrl } = useSongCoverUrl(currentSong?._id);
+  
+  const displayCoverUrl = useMemo(() => {
+    return coverUrl || currentSong?.coverImageUrl || 'https://via.placeholder.com/100';
+  }, [coverUrl, currentSong?.coverImageUrl]);
+  
   if (!currentSong) return null;
 
   return (
@@ -42,9 +50,14 @@ export default function MiniPlayer({
         {/* Album art */}
         <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 shadow-lg">
           <img
-            src={currentSong.coverImageUrl || 'https://via.placeholder.com/100'}
+            src={displayCoverUrl}
             alt={currentSong.title}
             className="w-full h-full object-cover"
+            onError={(e) => {
+              if (e.target.src !== 'https://via.placeholder.com/100') {
+                e.target.src = 'https://via.placeholder.com/100';
+              }
+            }}
           />
         </div>
 

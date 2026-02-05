@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import axios from 'axios';
 import PodcastCard from '@/components/common/PodcastCard';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://us-music-backend.vercel.app';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const PodcastHome = () => {
   const [podcasts, setPodcasts] = useState([]);

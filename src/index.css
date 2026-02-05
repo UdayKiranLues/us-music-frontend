@@ -11,18 +11,18 @@
     @apply bg-dark text-white font-sans antialiased;
     margin: 0;
     padding: 0;
-    overflow: hidden;
+    overflow: auto;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   html {
-    overflow: hidden;
+    overflow: auto;
     scroll-behavior: smooth;
   }
 
   #root {
-    @apply h-screen overflow-hidden;
+    @apply h-screen overflow-auto;
   }
 
   button {

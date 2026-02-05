@@ -1,21 +1,25 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import axios from 'axios';
+import { Link } from 'react-router-dom';
+import axios from '@/utils/axios';
 import SongCard from '@/components/common/SongCard';
 import SongList from '@/components/common/SongList';
-
-const API_URL = import.meta.env.VITE_API_URL || 'https://us-music-backend.vercel.app';
+import PodcastCard from '@/components/common/PodcastCard';
 
 const Home = () => {
   const [songs, setSongs] = useState([]);
+  const [podcasts, setPodcasts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingPodcasts, setLoadingPodcasts] = useState(true);
 
   useEffect(() => {
     const fetchSongs = async () => {
       try {
-        const response = await axios.get(`${API_URL}/api/v1/songs`);
+        const response = await axios.get(`/api/v1/songs?limit=50`);
         console.log('📥 Home: Fetched songs:', response.data);
-        setSongs(response.data.data || []);
+        const fetchedSongs = response.data.data || [];
+        setSongs(fetchedSongs);
+        if (fetchedSongs.length === 0) console.log("BACKEND RETURNED EMPTY");
       } catch (error) {
         console.error('❌ Home: Failed to fetch songs:', error);
       } finally {
@@ -23,7 +27,20 @@ const Home = () => {
       }
     };
 
+    const fetchPodcasts = async () => {
+      try {
+        const response = await axios.get(`/api/v1/podcasts`);
+        console.log('📥 Home: Fetched podcasts:', response.data);
+        setPodcasts(response.data.data || []);
+      } catch (error) {
+        console.error('❌ Home: Failed to fetch podcasts:', error);
+      } finally {
+        setLoadingPodcasts(false);
+      }
+    };
+
     fetchSongs();
+    fetchPodcasts();
   }, []);
 
   const trendingSongs = songs.filter(song => song.totalPlays > 0).slice(0, 10);
@@ -109,6 +126,36 @@ const Home = () => {
           </div>
         ) : (
           <div className="text-center py-12 text-gray-400">No trending songs available</div>
+        )}
+      </motion.section>
+
+      {/* Featured Podcasts */}
+      <motion.section variants={itemVariants}>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-2 flex items-center gap-3">
+              <span className="text-4xl">🎙️</span>
+              <span className="bg-gradient-to-r from-white via-white to-gray-300 bg-clip-text text-transparent">Featured Podcasts</span>
+            </h2>
+            <p className="text-gray-400 text-sm md:text-base font-medium">Discover amazing podcast content</p>
+          </div>
+          <Link
+            to="/podcasts"
+            className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors text-sm font-medium"
+          >
+            View All
+          </Link>
+        </div>
+        {loadingPodcasts ? (
+          <div className="text-center py-12 text-gray-400">Loading podcasts...</div>
+        ) : podcasts.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {podcasts.slice(0, 8).map(podcast => (
+              <PodcastCard key={podcast._id} podcast={podcast} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12 text-gray-400">No podcasts available</div>
         )}
       </motion.section>
 
