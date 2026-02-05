@@ -47,52 +47,52 @@ export function AuthProvider({ children }) {
   };
 
   // ---------------- LOGIN ----------------
- const login = async (email, password, navigate) => {
-  try {
-    console.log("🔐 Attempting login for:", email);
+  const login = async (email, password, navigate) => {
+    try {
+      console.log("🔐 Attempting login for:", email);
 
-    const response = await api.post("/api/v1/auth/login", {
-      email,
-      password,
-    });
+      const response = await api.post("/api/v1/auth/login", {
+        email,
+        password,
+      });
 
-    console.log("🧾 Raw login response:", response.data);
+      console.log("🧾 Raw login response:", response.data);
 
-    // ✅ SUPPORT BOTH BACKEND FORMATS SAFELY
-    const payload = response.data.data || response.data;
+      // ✅ SUPPORT BOTH BACKEND FORMATS SAFELY
+      const payload = response.data.data || response.data;
 
-    if (!payload?.token || !payload?.user) {
-      throw new Error("Invalid login response structure");
+      if (!payload?.token || !payload?.user) {
+        throw new Error("Invalid login response structure");
+      }
+
+      const { user, token, redirectTo } = payload;
+
+      console.log("✅ Login success:", user);
+
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+
+      setUser(user);
+      setIsAuthenticated(true);
+
+      if (navigate) {
+        navigate(redirectTo || "/home");
+      }
+
+      return { success: true, user };
+    } catch (error) {
+      console.error("❌ Login failed:", error.response?.data || error.message);
+
+      return {
+        success: false,
+        error:
+          error.response?.data?.error ||
+          error.response?.data?.message ||
+          error.message ||
+          "Login failed",
+      };
     }
-
-    const { user, token, redirectTo } = payload;
-
-    console.log("✅ Login success:", user);
-
-    localStorage.setItem("token", token);
-    localStorage.setItem("user", JSON.stringify(user));
-
-    setUser(user);
-    setIsAuthenticated(true);
-
-    if (navigate) {
-      navigate(redirectTo || "/home");
-    }
-
-    return { success: true, user };
-  } catch (error) {
-    console.error("❌ Login failed:", error.response?.data || error.message);
-
-    return {
-      success: false,
-      error:
-        error.response?.data?.error ||
-        error.response?.data?.message ||
-        error.message ||
-        "Login failed",
-    };
-  }
-};
+  };
 
 
   // ---------------- REGISTER ----------------
@@ -123,7 +123,7 @@ export function AuthProvider({ children }) {
   const logout = async () => {
     try {
       await api.post("/api/v1/auth/logout");
-    } catch (_) {}
+    } catch (_) { }
 
     localStorage.clear();
     setUser(null);
@@ -134,14 +134,29 @@ export function AuthProvider({ children }) {
   // ---------------- SET ROLE ----------------
   const setUserRole = async (role) => {
     try {
-      const res = await api.put("/api/v1/auth/set-role", { role });
+      console.log("🎭 Setting user role selection:", role);
 
-      const updatedUser = res.data.data;
+      // Map 'listener' to 'user' for backend compatibility
+      const targetRole = role === 'listener' ? 'user' : role;
+
+      if (role !== targetRole) {
+        console.log(`🔄 Mapping role "${role}" to "${targetRole}" for backend`);
+      }
+
+      const res = await api.put("/api/v1/auth/set-role", { role: targetRole });
+
+      console.log("✅ Role update response:", res.data);
+
+      const updatedUser = res.data.data || res.data.user;
+
+      if (!updatedUser) {
+        throw new Error("Invalid response from set-role");
+      }
 
       localStorage.setItem("user", JSON.stringify(updatedUser));
       setUser(updatedUser);
 
-      if (role === "artist") {
+      if (targetRole === "artist") {
         navigate("/artist/dashboard");
       } else {
         navigate("/home");
@@ -149,6 +164,7 @@ export function AuthProvider({ children }) {
 
       return { success: true };
     } catch (err) {
+      console.error("❌ Role update failed:", err.response?.data || err.message);
       return {
         success: false,
         error: err.response?.data?.error || "Role update failed",

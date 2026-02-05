@@ -1,7 +1,17 @@
 import axios from "axios";
 
+const getBaseURL = () => {
+  let url = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  // If URL doesn't start with http/https, prepend https:// (common for environment variables on Vercel)
+  if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+    console.warn(`⚠️ VITE_API_URL "${url}" missing protocol. Prepending https://`);
+    url = `https://${url}`;
+  }
+  return url;
+};
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000",
+  baseURL: getBaseURL(),
   withCredentials: true,
 });
 
