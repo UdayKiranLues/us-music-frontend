@@ -3,6 +3,7 @@ import { TrendingUp, Users, Music, BarChart3 } from 'lucide-react';
 import GlassCard from '@/components/admin/GlassCard';
 import StatCard from '@/components/admin/StatCard';
 import { getBaseURL } from '@/utils/axios';
+import { getImageUrl } from '@/utils/imageUrl';
 
 
 

@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { usePlayer } from '@/context/PlayerContext';
 import { memo, useMemo } from 'react';
 import { useSongCoverUrl } from '@/hooks/useSongCoverUrl';
+import { getImageUrl } from '@/utils/imageUrl';
 
 const SongList = memo(({ songs, showIndex = false }) => {
   const { playSong, currentSong, isPlaying, replaceQueue } = usePlayer();
