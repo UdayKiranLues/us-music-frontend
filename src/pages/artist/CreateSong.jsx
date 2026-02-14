@@ -23,12 +23,17 @@ const CreateSong = () => {
     duration: 0,
     lyrics: '',
     explicit: false,
+    language: 'English',
     coverImage: null,
     audioFile: null,
   });
 
   const genres = [
     'Pop', 'Rock', 'Hip Hop', 'R&B', 'Jazz', 'Classical', 'Electronic', 'Country', 'Folk', 'Reggae', 'Blues', 'Other'
+  ];
+
+  const languages = [
+    'English', 'Spanish', 'French', 'German', 'Chinese', 'Japanese', 'Korean', 'Hindi', 'Arabic', 'Portuguese', 'Other'
   ];
 
   const handleInputChange = (e) => {
@@ -57,8 +62,20 @@ const CreateSong = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.title.trim() || !formData.audioFile) {
-      setError('Title and audio file are required');
+    if (!formData.title.trim()) {
+      setError('Title is required');
+      return;
+    }
+    if (!formData.genre) {
+      setError('Genre is required');
+      return;
+    }
+    if (!formData.language) {
+      setError('Language is required');
+      return;
+    }
+    if (!formData.audioFile) {
+      setError('Audio file is required');
       return;
     }
 
@@ -72,9 +89,10 @@ const CreateSong = () => {
       submitData.append('album', formData.album);
       submitData.append('genre', formData.genre);
       submitData.append('year', formData.year);
-      submitData.append('duration', formData.duration);
-      submitData.append('lyrics', formData.lyrics);
+      submitData.append('duration', formData.duration || 0);
+      submitData.append('lyrics', formData.lyrics || '');
       submitData.append('explicit', formData.explicit);
+      submitData.append('language', formData.language);
 
       if (formData.audioFile) {
         submitData.append('audio', formData.audioFile);
@@ -237,13 +255,14 @@ const CreateSong = () => {
 
             <div>
               <label className="block text-sm font-medium text-white mb-2">
-                Genre
+                Genre *
               </label>
               <select
                 name="genre"
                 value={formData.genre}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-accent-orange focus:border-transparent"
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-accent-orange focus:border-transparent [&>option]:bg-dark [&>option]:text-white"
+                required
               >
                 <option value="">Select genre</option>
                 {genres.map(genre => (
@@ -253,8 +272,25 @@ const CreateSong = () => {
             </div>
           </div>
 
-          {/* Year and Duration */}
+          {/* Language and Year */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">
+                Language *
+              </label>
+              <select
+                name="language"
+                value={formData.language}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-accent-orange focus:border-transparent [&>option]:bg-dark [&>option]:text-white"
+                required
+              >
+                {languages.map(lang => (
+                  <option key={lang} value={lang}>{lang}</option>
+                ))}
+              </select>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-white mb-2">
                 Release Year
@@ -270,7 +306,10 @@ const CreateSong = () => {
                 className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-orange focus:border-transparent"
               />
             </div>
+          </div>
 
+          {/* Duration */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-white mb-2">
                 Duration (seconds)
