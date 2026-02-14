@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { getImageUrl } from '@/utils/imageUrl';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import api from '@/utils/axios';
@@ -106,7 +107,7 @@ const ArtistProfile = () => {
           <div className="flex-shrink-0">
             <div className="w-32 h-32 md:w-40 md:h-40 bg-gradient-to-br from-accent-purple to-accent-blue rounded-full flex items-center justify-center text-6xl">
               {artist.avatar ? (
-                <img src={artist.avatar} alt={artist.name} className="w-full h-full object-cover rounded-full" />
+                <img src={getImageUrl(artist.avatar)} alt={artist.name} className="w-full h-full object-cover rounded-full" />
               ) : (
                 artist.name.charAt(0).toUpperCase()
               )}
@@ -154,8 +155,8 @@ const ArtistProfile = () => {
           <button
             onClick={() => setActiveTab('songs')}
             className={`px-6 py-3 font-semibold transition-colors ${activeTab === 'songs'
-                ? 'text-accent-orange border-b-2 border-accent-orange'
-                : 'text-gray-400 hover:text-white'
+              ? 'text-accent-orange border-b-2 border-accent-orange'
+              : 'text-gray-400 hover:text-white'
               }`}
           >
             🎵 Songs ({songs.length})
@@ -163,8 +164,8 @@ const ArtistProfile = () => {
           <button
             onClick={() => setActiveTab('podcasts')}
             className={`px-6 py-3 font-semibold transition-colors ${activeTab === 'podcasts'
-                ? 'text-accent-blue border-b-2 border-accent-blue'
-                : 'text-gray-400 hover:text-white'
+              ? 'text-accent-blue border-b-2 border-accent-blue'
+              : 'text-gray-400 hover:text-white'
               }`}
           >
             🎙️ Podcasts ({podcasts.length})

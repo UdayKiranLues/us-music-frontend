@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { getImageUrl } from '@/utils/imageUrl';
 import { usePlayer } from '@/context/PlayerContext';
 import { playlists, songs } from '@/data/mockData';
 import SongCard from '@/components/common/SongCard';
@@ -8,7 +9,7 @@ const Library = () => {
   // TODO: Implement favorites in PlayerContext
   const favorites = [];
   // const { favorites } = usePlayer();
-  
+
   const likedSongs = favorites;
 
   return (
@@ -35,7 +36,7 @@ const Library = () => {
         <div className="glass-strong rounded-3xl p-8 border border-white/10 mb-6 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-accent-red/20 to-accent-orange/20 opacity-60" />
           <div className="relative z-10 flex items-center gap-6 mb-6">
-            <motion.div 
+            <motion.div
               whileHover={{ scale: 1.05, rotate: 5 }}
               className="w-20 h-20 rounded-2xl bg-gradient-to-br from-accent-red via-accent-orange to-accent-orange flex items-center justify-center text-4xl shadow-2xl shadow-accent-orange/40 animate-glow"
             >
@@ -56,7 +57,7 @@ const Library = () => {
           </div>
         ) : (
           <div className="text-center py-20 glass rounded-2xl border border-white/5">
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.2 }}
@@ -92,7 +93,7 @@ const Library = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {playlists.map((playlist, index) => {
             const playlistSongs = songs.filter(song => playlist.songs.includes(song.id));
-            
+
             return (
               <motion.div
                 key={playlist.id}
@@ -103,7 +104,7 @@ const Library = () => {
                 className="bg-dark-lighter/50 backdrop-blur-sm rounded-xl p-6 border border-white/5 hover:border-accent-orange/30 transition-all cursor-pointer"
               >
                 <img
-                  src={playlist.coverUrl}
+                  src={getImageUrl(playlist.coverUrl)}
                   alt={playlist.name}
                   className="w-full aspect-square object-cover rounded-lg mb-4 shadow-lg"
                 />

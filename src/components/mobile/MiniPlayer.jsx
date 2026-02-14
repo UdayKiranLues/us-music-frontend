@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { mobile } from '../../styles/designTokens';
 import { useMemo } from 'react';
 import { useSongCoverUrl } from '@/hooks/useSongCoverUrl';
+import { getImageUrl } from '@/utils/imageUrl';
 
 /**
  * Mobile Mini Player
@@ -18,11 +19,11 @@ export default function MiniPlayer({
   progress = 0,
 }) {
   const { coverUrl } = useSongCoverUrl(currentSong?._id);
-  
+
   const displayCoverUrl = useMemo(() => {
-    return coverUrl || currentSong?.coverImageUrl || 'https://via.placeholder.com/100';
+    return getImageUrl(coverUrl || currentSong?.coverImageUrl) || 'https://via.placeholder.com/100';
   }, [coverUrl, currentSong?.coverImageUrl]);
-  
+
   if (!currentSong) return null;
 
   return (

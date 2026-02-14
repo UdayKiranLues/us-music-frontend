@@ -1,5 +1,6 @@
 import { usePlayer } from '@/context/PlayerContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getImageUrl } from '@/utils/imageUrl';
 
 const Player = () => {
   const {
@@ -96,8 +97,8 @@ const Player = () => {
               initial={false}
               animate={{ width: `${progressPercentage}%` }}
             >
-              <motion.div 
-                className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-lg shadow-accent-orange/50 opacity-0 group-hover:opacity-100 transition-opacity" 
+              <motion.div
+                className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-lg shadow-accent-orange/50 opacity-0 group-hover:opacity-100 transition-opacity"
                 whileHover={{ scale: 1.2 }}
               />
             </motion.div>
@@ -111,7 +112,7 @@ const Player = () => {
                 className="relative flex-shrink-0"
               >
                 <img
-                  src={currentSong.coverUrl}
+                  src={getImageUrl(currentSong.coverUrl)}
                   alt={`${currentSong.title} album cover`}
                   className="w-16 h-16 rounded-xl object-cover shadow-xl"
                 />

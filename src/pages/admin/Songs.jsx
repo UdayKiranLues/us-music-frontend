@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { getImageUrl } from '@/utils/imageUrl';
 import { Search, Edit2, Trash2, Play, Clock, TrendingUp, RefreshCw } from 'lucide-react';
 import GlassCard from '@/components/admin/GlassCard';
 import api from '@/utils/axios';
@@ -186,7 +187,7 @@ const Songs = () => {
                       <div className="flex items-center space-x-3">
                         <div className="relative group">
                           <img
-                            src={song.coverImageUrl || 'https://via.placeholder.com/100'}
+                            src={getImageUrl(song.coverImageUrl) || 'https://via.placeholder.com/100'}
                             alt={song.title}
                             className="w-12 h-12 rounded-lg object-cover"
                           />

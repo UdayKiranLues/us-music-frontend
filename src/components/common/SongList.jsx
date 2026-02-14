@@ -33,7 +33,7 @@ const SongListItem = memo(({ song, index, isCurrentSong, isPlaying, showIndex, o
   const { coverUrl } = useSongCoverUrl(song._id || song.id);
 
   const displayCoverUrl = useMemo(() => {
-    return coverUrl || song.coverUrl || 'https://via.placeholder.com/100';
+    return getImageUrl(coverUrl || song.coverUrl) || 'https://via.placeholder.com/100';
   }, [coverUrl, song.coverUrl]);
 
   return (
@@ -43,8 +43,8 @@ const SongListItem = memo(({ song, index, isCurrentSong, isPlaying, showIndex, o
       transition={{ delay: Math.min(index * 0.03, 0.5), duration: 0.3 }}
       whileHover={{ x: 6, scale: 1.01 }}
       className={`group relative flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all duration-200 ${isCurrentSong
-          ? 'glass-strong shadow-lg shadow-accent-orange/10 border border-accent-orange/30'
-          : 'glass hover-lift border border-white/5'
+        ? 'glass-strong shadow-lg shadow-accent-orange/10 border border-accent-orange/30'
+        : 'glass hover-lift border border-white/5'
         }`}
       onClick={() => onPlay(song)}
       role="button"
@@ -123,8 +123,8 @@ const SongListItem = memo(({ song, index, isCurrentSong, isPlaying, showIndex, o
       {/* Song Info - Enhanced typography */}
       <div className="flex-1 min-w-0">
         <h4 className={`font-bold text-[15px] truncate mb-0.5 transition-colors ${isCurrentSong
-            ? 'bg-gradient-to-r from-accent-orange to-accent-red bg-clip-text text-transparent'
-            : 'text-white group-hover:text-accent-orange'
+          ? 'bg-gradient-to-r from-accent-orange to-accent-red bg-clip-text text-transparent'
+          : 'text-white group-hover:text-accent-orange'
           }`}>
           {song.title}
         </h4>

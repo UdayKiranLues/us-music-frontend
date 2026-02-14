@@ -15,15 +15,16 @@ import {
 } from 'lucide-react';
 import { mobile, colors, glassmorphism } from '../../styles/designTokens';
 import { useSongCoverUrl } from '@/hooks/useSongCoverUrl';
+import { getImageUrl } from '@/utils/imageUrl';
 
 /**
  * Mobile Full-Screen Player
  * Spotify-style full-screen player with swipe gestures
  */
-export default function MobilePlayer({ 
-  isOpen, 
-  onClose, 
-  currentSong, 
+export default function MobilePlayer({
+  isOpen,
+  onClose,
+  currentSong,
   isPlaying,
   onPlayPause,
   onNext,
@@ -38,9 +39,9 @@ export default function MobilePlayer({
   const controls = useAnimation();
   const constraintsRef = useRef(null);
   const { coverUrl } = useSongCoverUrl(currentSong?._id);
-  
+
   const displayCoverUrl = useMemo(() => {
-    return coverUrl || currentSong?.coverImageUrl || 'https://via.placeholder.com/400';
+    return getImageUrl(coverUrl || currentSong?.coverImageUrl) || 'https://via.placeholder.com/400';
   }, [coverUrl, currentSong?.coverImageUrl]);
 
   // Swipe handlers
@@ -99,12 +100,12 @@ export default function MobilePlayer({
         >
           <ChevronDown size={28} strokeWidth={2} />
         </button>
-        
+
         <div className="text-center">
           <p className="text-xs text-neutral-400 uppercase tracking-wider">Playing from</p>
           <p className="text-sm font-medium text-white">{currentSong.album || 'Library'}</p>
         </div>
-        
+
         <button
           className="p-2 -mr-2 text-neutral-400 hover:text-white transition-colors"
           style={{ minWidth: mobile.touchTarget.min, minHeight: mobile.touchTarget.min }}
@@ -132,7 +133,7 @@ export default function MobilePlayer({
               }
             }}
           />
-          
+
           {/* Gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
         </motion.div>
@@ -159,7 +160,7 @@ export default function MobilePlayer({
               initial={false}
               animate={{ width: `${progress}%` }}
             />
-            
+
             {/* Draggable thumb */}
             <input
               type="range"
@@ -171,7 +172,7 @@ export default function MobilePlayer({
               style={{ zIndex: 10 }}
             />
           </div>
-          
+
           {/* Time labels */}
           <div className="flex justify-between text-xs text-neutral-400">
             <span>{formatTime(currentTime)}</span>

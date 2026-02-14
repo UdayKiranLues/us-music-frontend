@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { getImageUrl } from '@/utils/imageUrl';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import axios from '@/utils/axios';
@@ -250,7 +251,7 @@ const ArtistDashboard = () => {
                         {/* Cover Image */}
                         <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-accent-purple/20 to-accent-blue/20">
                           {podcast.coverImage ? (
-                            <img src={podcast.coverImage} alt={podcast.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                            <img src={getImageUrl(podcast.coverImage)} alt={podcast.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
                               <span className="text-6xl">🎙️</span>
@@ -335,7 +336,7 @@ const ArtistDashboard = () => {
                       {/* Cover Image */}
                       <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-accent-orange/20 to-accent-red/20">
                         {song.coverImage ? (
-                          <img src={song.coverImage} alt={song.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                          <img src={getImageUrl(song.coverImage)} alt={song.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             <span className="text-6xl">🎵</span>
@@ -416,7 +417,7 @@ const ArtistDashboard = () => {
                       {/* Cover Image */}
                       <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-accent-blue/20 to-accent-purple/20">
                         {album.coverImage ? (
-                          <img src={album.coverImage} alt={album.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                          <img src={getImageUrl(album.coverImage)} alt={album.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             <span className="text-6xl">💿</span>

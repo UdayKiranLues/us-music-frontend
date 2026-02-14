@@ -1,6 +1,7 @@
 import { Users, Music, Album, TrendingUp, Play, Download } from 'lucide-react';
 import GlassCard from '@/components/admin/GlassCard';
 import StatCard from '@/components/admin/StatCard';
+import { getImageUrl } from '@/utils/imageUrl';
 
 const Dashboard = () => {
   // Mock data - replace with API calls
@@ -125,7 +126,7 @@ const Dashboard = () => {
                     </span>
                   </div>
                   <img
-                    src={song.coverUrl}
+                    src={getImageUrl(song.coverUrl)}
                     alt={song.title}
                     className="w-12 h-12 rounded-lg object-cover"
                   />

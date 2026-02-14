@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { getImageUrl } from '@/utils/imageUrl';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import api from '@/utils/axios';
@@ -111,7 +112,7 @@ const PodcastDetail = () => {
             <div className="relative aspect-square rounded-2xl overflow-hidden shadow-2xl shadow-accent-blue/20">
               {podcast.coverImage ? (
                 <img
-                  src={podcast.coverImage}
+                  src={getImageUrl(podcast.coverImage)}
                   alt={podcast.title}
                   className="w-full h-full object-cover"
                 />
