@@ -14,9 +14,18 @@ const ArtistDashboard = () => {
   const [loadingPodcasts, setLoadingPodcasts] = useState(true);
   const [loadingSongs, setLoadingSongs] = useState(true);
   const [loadingAlbums, setLoadingAlbums] = useState(true);
+  const [stats, setStats] = useState({ songs: 0, albums: 0, totalPlays: 0, followers: 0 });
 
   useEffect(() => {
     const fetchData = async () => {
+      try {
+        // Fetch artist stats
+        const statsRes = await axios.get(`/api/v1/artist/stats`);
+        setStats(statsRes.data.data);
+      } catch (err) {
+        console.error('❌ Failed to fetch artist stats:', err);
+      }
+
       try {
         // Fetch artist's podcasts
         const podcastRes = await axios.get(`/api/v1/artist/podcasts`);
@@ -386,9 +395,12 @@ const ArtistDashboard = () => {
                 <span className="text-4xl">💿</span>
                 My Albums
               </h2>
-              <button className="px-4 py-2 bg-gradient-to-r from-accent-blue to-accent-purple text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-accent-blue/40 transition-all">
+              <Link
+                to="/artist/albums/new"
+                className="px-4 py-2 bg-gradient-to-r from-accent-blue to-accent-purple text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-accent-blue/40 transition-all"
+              >
                 Create Album
-              </button>
+              </Link>
             </div>
 
             {loadingAlbums ? (
@@ -449,9 +461,12 @@ const ArtistDashboard = () => {
             ) : (
               <div className="text-center py-12 space-y-4">
                 <p className="text-gray-400">No albums yet</p>
-                <button className="inline-block px-6 py-2 bg-gradient-to-r from-accent-blue to-accent-purple text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-accent-blue/40 transition-all">
+                <Link
+                  to="/artist/albums/new"
+                  className="inline-block px-6 py-2 bg-gradient-to-r from-accent-blue to-accent-purple text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-accent-blue/40 transition-all"
+                >
                   Create your first album
-                </button>
+                </Link>
               </div>
             )}
           </div>
@@ -532,15 +547,15 @@ const ArtistDashboard = () => {
         className="grid grid-cols-1 md:grid-cols-3 gap-6"
       >
         <div className="bg-gradient-to-br from-accent-purple/20 to-accent-blue/20 border border-accent-purple/30 rounded-2xl p-6 text-center">
-          <p className="text-3xl font-bold text-white">0</p>
+          <p className="text-3xl font-bold text-white">{stats.totalPlays || 0}</p>
           <p className="text-sm text-gray-400 mt-2">Total Listens</p>
         </div>
         <div className="bg-gradient-to-br from-accent-orange/20 to-accent-red/20 border border-accent-orange/30 rounded-2xl p-6 text-center">
-          <p className="text-3xl font-bold text-white">0</p>
+          <p className="text-3xl font-bold text-white">{stats.followers || 0}</p>
           <p className="text-sm text-gray-400 mt-2">Followers</p>
         </div>
         <div className="bg-gradient-to-br from-accent-blue/20 to-accent-purple/20 border border-accent-blue/30 rounded-2xl p-6 text-center">
-          <p className="text-3xl font-bold text-white">0</p>
+          <p className="text-3xl font-bold text-white">{(stats.songs || 0) + (stats.albums || 0)}</p>
           <p className="text-sm text-gray-400 mt-2">Published Content</p>
         </div>
       </motion.section>

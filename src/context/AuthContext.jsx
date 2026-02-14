@@ -79,7 +79,7 @@ export function AuthProvider({ children }) {
         navigate(redirectTo || "/home");
       }
 
-      return { success: true, user };
+      return { success: true, user, redirectTo };
     } catch (error) {
       console.error("❌ Login failed:", error.response?.data || error.message);
 

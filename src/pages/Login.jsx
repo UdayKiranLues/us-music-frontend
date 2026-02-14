@@ -7,7 +7,7 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const { login, isLoading } = useAuth();
-  
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -17,7 +17,7 @@ export default function Login() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiError, setApiError] = useState('');
 
-  const from = location.state?.from?.pathname || '/admin/upload';
+  const from = location.state?.from?.pathname || '/home';
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -50,7 +50,7 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -60,15 +60,17 @@ export default function Login() {
 
     try {
       const result = await login(formData.email, formData.password, navigate);
-      
+
       if (result.success) {
         // Check if user needs to select a role
         if (result.needsRoleSelection) {
           navigate('/select-role', { replace: true });
         } else {
-          // Navigation is now handled in AuthContext if redirectTo is present
-          // Otherwise, redirect to intended page or admin upload
-          if (!result.redirectTo) {
+          // Priority to result.redirectTo if provided by AuthContext/Backend
+          // This ensures admin users go to /admin as defined in backend
+          if (result.redirectTo) {
+            navigate(result.redirectTo, { replace: true });
+          } else {
             navigate(from, { replace: true });
           }
         }
@@ -119,9 +121,8 @@ export default function Login() {
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  className={`w-full pl-12 pr-4 py-3 bg-white/5 border ${
-                    errors.email ? 'border-red-500/50' : 'border-white/10'
-                  } rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-accent-orange/50 transition-colors`}
+                  className={`w-full pl-12 pr-4 py-3 bg-white/5 border ${errors.email ? 'border-red-500/50' : 'border-white/10'
+                    } rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-accent-orange/50 transition-colors`}
                   placeholder="you@example.com"
                 />
               </div>
@@ -145,9 +146,8 @@ export default function Login() {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className={`w-full pl-12 pr-12 py-3 bg-white/5 border ${
-                    errors.password ? 'border-red-500/50' : 'border-white/10'
-                  } rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-accent-orange/50 transition-colors`}
+                  className={`w-full pl-12 pr-12 py-3 bg-white/5 border ${errors.password ? 'border-red-500/50' : 'border-white/10'
+                    } rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-accent-orange/50 transition-colors`}
                   placeholder="Enter your password"
                 />
                 <button

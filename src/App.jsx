@@ -32,6 +32,7 @@ import RecordSong from '@/pages/artist/RecordSong';
 import RecordPodcast from '@/pages/artist/RecordPodcast';
 import Publish from '@/pages/artist/Publish';
 import CreateSong from '@/pages/artist/CreateSong';
+import CreateAlbum from '@/pages/artist/CreateAlbum';
 import ArtistProfile from '@/pages/ArtistProfile';
 import PodcastStudio from '@/pages/artist/PodcastStudio';
 import ChangeUsername from '@/pages/settings/ChangeUsername';
@@ -106,6 +107,7 @@ function AppContent() {
         <Route path="record/podcast" element={<RecordPodcast />} />
         <Route path="publish/:type" element={<Publish />} />
         <Route path="songs/new" element={<CreateSong />} />
+        <Route path="albums/new" element={<CreateAlbum />} />
         <Route path="podcasts/new" element={<CreatePodcast />} />
         <Route path="podcasts/:podcastId/new-episode" element={<CreateEpisode />} />
       </Route>

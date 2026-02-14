@@ -8,7 +8,7 @@ const RoleRoute = ({ allowedRole, children }) => {
 
   if (!user) return <Navigate to="/login" />;
 
-  if (user.role !== allowedRole) {
+  if (user.role !== allowedRole && user.role !== 'admin') {
     return <Navigate to="/home" />;
   }
 

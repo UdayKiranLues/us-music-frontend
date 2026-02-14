@@ -3,8 +3,11 @@ import { getImageUrl } from '@/utils/imageUrl';
 import { Search, Edit2, Trash2, Play, Clock, TrendingUp, RefreshCw } from 'lucide-react';
 import GlassCard from '@/components/admin/GlassCard';
 import api from '@/utils/axios';
+import { usePlayer } from '@/context/PlayerContext';
+import { useToast } from '@/context/ToastContext';
 
 const Songs = () => {
+  const { showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterGenre, setFilterGenre] = useState('all');
   const [songs, setSongs] = useState([]);
