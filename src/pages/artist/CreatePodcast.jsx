@@ -1,7 +1,5 @@
-import { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import axios from '@/utils/axios';
+import api from '@/utils/axios';
 
 const CreatePodcast = () => {
   const navigate = useNavigate();
@@ -132,7 +130,7 @@ const CreatePodcast = () => {
         submitData.append('coverImage', formData.coverImage);
       }
 
-      const response = await axios.post(
+      const response = await api.post(
         `/api/v1/artist/podcasts`,
         submitData,
         {
@@ -278,8 +276,8 @@ const CreatePodcast = () => {
                   type="button"
                   onClick={() => handleCategoryToggle(category)}
                   className={`px-4 py-2 rounded-lg transition-all duration-200 text-sm font-medium ${formData.categories.includes(category)
-                      ? 'bg-accent-purple text-white'
-                      : 'bg-white/5 hover:bg-white/10 text-gray-300'
+                    ? 'bg-accent-purple text-white'
+                    : 'bg-white/5 hover:bg-white/10 text-gray-300'
                     }`}
                 >
                   {category}

@@ -10,9 +10,9 @@ const SongCard = memo(({ song, playlist = [], index = 0 }) => {
 
   const isCurrentSong = currentSong?._id === song._id;
 
-  // Fallback to original URL or placeholder
+  // Fallback to original URL or null to handle custom placeholder logic
   const displayCoverUrl = useMemo(() => {
-    return getImageUrl(coverUrl || song.coverImageUrl) || 'https://via.placeholder.com/300';
+    return getImageUrl(coverUrl || song.coverImageUrl);
   }, [coverUrl, song.coverImageUrl]);
 
   const handlePlay = () => {
@@ -59,17 +59,30 @@ const SongCard = memo(({ song, playlist = [], index = 0 }) => {
 
       {/* Cover Image with enhanced overlay */}
       <div className="relative mb-4 overflow-hidden rounded-xl shadow-lg">
-        <img
-          src={displayCoverUrl}
-          alt={`${song.title} album cover`}
-          className="w-full aspect-square object-cover transition-transform duration-500 group-hover:scale-110"
-          loading="lazy"
-          onError={(e) => {
-            if (e.target.src !== 'https://via.placeholder.com/300') {
-              e.target.src = 'https://via.placeholder.com/300';
-            }
-          }}
-        />
+        {displayCoverUrl ? (
+          <img
+            src={displayCoverUrl}
+            alt={`${song.title} album cover`}
+            className="w-full aspect-square object-cover transition-transform duration-500 group-hover:scale-110"
+            loading="lazy"
+            onError={(e) => {
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'flex';
+            }}
+          />
+        ) : null}
+
+        {/* Premium CSS Fallback */}
+        <div
+          className="w-full aspect-square bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center group-hover:scale-110 transition-transform duration-500"
+          style={{ display: displayCoverUrl ? 'none' : 'flex' }}
+        >
+          <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center backdrop-blur-md border border-white/10 group-hover:bg-accent-orange/20 transition-colors">
+            <svg className="w-8 h-8 text-gray-400 group-hover:text-accent-orange transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+            </svg>
+          </div>
+        </div>
 
         {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />

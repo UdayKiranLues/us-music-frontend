@@ -12,6 +12,7 @@ const CreateSong = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [coverPreview, setCoverPreview] = useState(null);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -40,8 +41,16 @@ const CreateSong = () => {
 
   const handleFileChange = (e) => {
     const { name, files } = e.target;
-    if (files && files[0]) {
-      setFormData(prev => ({ ...prev, [name]: files[0] }));
+    const file = files?.[0];
+    if (file) {
+      if (name === 'coverImage') {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          setCoverPreview(event.target?.result);
+        };
+        reader.readAsDataURL(file);
+      }
+      setFormData(prev => ({ ...prev, [name]: file }));
     }
   };
 
@@ -161,8 +170,8 @@ const CreateSong = () => {
               onClick={() => fileInputRef.current?.click()}
               className="border-2 border-dashed border-white/20 rounded-lg p-8 text-center cursor-pointer hover:border-accent-orange/50 transition-colors"
             >
-              <Music className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-white mb-2">
+              <Music className={`w-12 h-12 mx-auto mb-4 transition-colors ${formData.audioFile ? 'text-accent-orange' : 'text-gray-400'}`} />
+              <p className={`font-bold mb-2 ${formData.audioFile ? 'text-accent-orange' : 'text-white'}`}>
                 {formData.audioFile ? formData.audioFile.name : 'Click to select audio file'}
               </p>
               <p className="text-gray-400 text-sm">MP3, WAV, FLAC up to 100MB</p>
@@ -282,13 +291,32 @@ const CreateSong = () => {
             <label className="block text-sm font-medium text-white mb-2">
               Cover Image
             </label>
-            <input
-              type="file"
-              name="coverImage"
-              accept="image/*"
-              onChange={handleFileChange}
-              className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-accent-orange file:text-white hover:file:bg-accent-orange/80"
-            />
+            <div className="flex gap-6 items-start">
+              {/* Preview */}
+              <div className="flex-shrink-0">
+                <div className="w-32 h-32 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden">
+                  {coverPreview ? (
+                    <img src={coverPreview} alt="Cover preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-4xl">🎵</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Upload Input */}
+              <div className="flex-1">
+                <input
+                  type="file"
+                  name="coverImage"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-accent-orange file:text-white hover:file:bg-accent-orange/80 cursor-pointer"
+                />
+                <p className="text-xs text-gray-400 mt-2">
+                  JPG, PNG up to 5MB. Square aspect ratio recommended.
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Lyrics */}

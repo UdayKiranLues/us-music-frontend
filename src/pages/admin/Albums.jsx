@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Plus, Search, Edit2, Trash2, Music } from 'lucide-react';
 import GlassCard from '@/components/admin/GlassCard';
 
@@ -167,50 +167,109 @@ const CreateAlbumModal = ({ onClose }) => {
     artist: '',
     releaseDate: '',
     description: '',
+    coverImage: null,
   });
+  const [coverPreview, setCoverPreview] = useState(null);
+  const fileInputRef = useRef(null);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setCoverPreview(event.target?.result);
+      };
+      reader.readAsDataURL(file);
+      setFormData(prev => ({ ...prev, coverImage: file }));
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // TODO: Implement API call to create album
-    console.log('Creating album:', formData);
+    // Create FormData for multipart upload
+    const submitData = new FormData();
+    Object.keys(formData).forEach(key => {
+      submitData.append(key, formData[key]);
+    });
+
+    // TODO: Implement API call to create album via api instance
+    console.log('Creating album FormData:', submitData);
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-      <GlassCard className="w-full max-w-2xl p-8 m-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
+      <GlassCard className="w-full max-w-2xl p-8 my-8">
         <h2 className="text-2xl font-bold text-white mb-6">Create New Album</h2>
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Album Title
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.title}
-              onChange={(e) =>
-                setFormData({ ...formData, title: e.target.value })
-              }
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-accent-orange/50 transition-colors"
-              placeholder="Enter album title"
-            />
+          {/* Cover Image Section */}
+          <div className="flex gap-6 items-start">
+            <div className="flex-shrink-0">
+              <div className="w-32 h-32 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden">
+                {coverPreview ? (
+                  <img src={coverPreview} alt="Cover preview" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-4xl">💿</span>
+                )}
+              </div>
+            </div>
+
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Album Cover
+              </label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white font-medium transition-all"
+              >
+                Choose Image
+              </button>
+              <p className="text-xs text-gray-500 mt-2">
+                JPG, PNG up to 5MB. Square aspect ratio recommended.
+              </p>
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Artist Name
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.artist}
-              onChange={(e) =>
-                setFormData({ ...formData, artist: e.target.value })
-              }
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-accent-orange/50 transition-colors"
-              placeholder="Enter artist name"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Album Title
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.title}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-accent-orange/50 transition-colors"
+                placeholder="Enter album title"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Artist Name
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.artist}
+                onChange={(e) =>
+                  setFormData({ ...formData, artist: e.target.value })
+                }
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-accent-orange/50 transition-colors"
+                placeholder="Enter artist name"
+              />
+            </div>
           </div>
 
           <div>

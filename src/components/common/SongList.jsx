@@ -34,7 +34,7 @@ const SongListItem = memo(({ song, index, isCurrentSong, isPlaying, showIndex, o
   const { coverUrl } = useSongCoverUrl(song._id || song.id);
 
   const displayCoverUrl = useMemo(() => {
-    return getImageUrl(coverUrl || song.coverUrl) || 'https://via.placeholder.com/100';
+    return getImageUrl(coverUrl || song.coverUrl);
   }, [coverUrl, song.coverUrl]);
 
   return (
@@ -105,17 +105,28 @@ const SongListItem = memo(({ song, index, isCurrentSong, isPlaying, showIndex, o
         whileHover={{ scale: 1.05 }}
         className="relative flex-shrink-0"
       >
-        <img
-          src={displayCoverUrl}
-          alt={`${song.title} album cover`}
-          className="w-14 h-14 rounded-lg object-cover shadow-lg"
-          loading="lazy"
-          onError={(e) => {
-            if (e.target.src !== 'https://via.placeholder.com/100') {
-              e.target.src = 'https://via.placeholder.com/100';
-            }
-          }}
-        />
+        {displayCoverUrl ? (
+          <img
+            src={displayCoverUrl}
+            alt={`${song.title} album cover`}
+            className="w-14 h-14 rounded-lg object-cover shadow-lg"
+            loading="lazy"
+            onError={(e) => {
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'flex';
+            }}
+          />
+        ) : null}
+
+        {/* CSS Fallback for list item */}
+        <div
+          className="w-14 h-14 rounded-lg bg-white/5 flex items-center justify-center border border-white/10"
+          style={{ display: displayCoverUrl ? 'none' : 'flex' }}
+        >
+          <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+          </svg>
+        </div>
         {isCurrentSong && (
           <div className="absolute inset-0 bg-gradient-to-tr from-accent-orange/30 to-accent-red/30 rounded-lg" />
         )}
