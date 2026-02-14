@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import axios from 'axios';
+import api from '@/utils/axios';
 import PodcastCard from '@/components/common/PodcastCard';
 import SongCard from '@/components/common/SongCard';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 
 const ArtistProfile = () => {
   const { artistName } = useParams();
@@ -22,15 +22,15 @@ const ArtistProfile = () => {
         setLoading(true);
 
         // Fetch artist profile
-        const artistResponse = await axios.get(`${API_URL}/api/v1/artists/${artistName}`);
+        const artistResponse = await api.get(`/api/v1/artists/${artistName}`);
         setArtist(artistResponse.data.data);
 
         // Fetch artist's songs
-        const songsResponse = await axios.get(`${API_URL}/api/v1/artists/${artistName}/songs`);
+        const songsResponse = await api.get(`/api/v1/artists/${artistName}/songs`);
         setSongs(songsResponse.data.data || []);
 
         // Fetch artist's podcasts
-        const podcastsResponse = await axios.get(`${API_URL}/api/v1/artists/${artistName}/podcasts`);
+        const podcastsResponse = await api.get(`/api/v1/artists/${artistName}/podcasts`);
         setPodcasts(podcastsResponse.data.data || []);
 
       } catch (err) {
@@ -153,21 +153,19 @@ const ArtistProfile = () => {
         <div className="flex border-b border-white/10 mb-8">
           <button
             onClick={() => setActiveTab('songs')}
-            className={`px-6 py-3 font-semibold transition-colors ${
-              activeTab === 'songs'
+            className={`px-6 py-3 font-semibold transition-colors ${activeTab === 'songs'
                 ? 'text-accent-orange border-b-2 border-accent-orange'
                 : 'text-gray-400 hover:text-white'
-            }`}
+              }`}
           >
             🎵 Songs ({songs.length})
           </button>
           <button
             onClick={() => setActiveTab('podcasts')}
-            className={`px-6 py-3 font-semibold transition-colors ${
-              activeTab === 'podcasts'
+            className={`px-6 py-3 font-semibold transition-colors ${activeTab === 'podcasts'
                 ? 'text-accent-blue border-b-2 border-accent-blue'
                 : 'text-gray-400 hover:text-white'
-            }`}
+              }`}
           >
             🎙️ Podcasts ({podcasts.length})
           </button>

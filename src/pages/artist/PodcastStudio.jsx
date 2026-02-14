@@ -17,6 +17,13 @@ const PodcastStudio = () => {
   const [myPodcasts, setMyPodcasts] = useState([]);
   const [selectedPodcastId, setSelectedPodcastId] = useState('');
   const [loadingPodcasts, setLoadingPodcasts] = useState(false);
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [formData, setFormData] = useState({
+    title: '',
+    category: 'Business',
+    keywords: [],
+    keywordInput: ''
+  });
 
   // Fetch artist's podcasts on load
   useEffect(() => {

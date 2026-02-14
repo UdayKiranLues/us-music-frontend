@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { TrendingUp, Users, Music, BarChart3 } from 'lucide-react';
 import GlassCard from '@/components/admin/GlassCard';
 import StatCard from '@/components/admin/StatCard';
+import { getBaseURL } from '@/utils/axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+
 
 const AnalyticsLive = () => {
   const [loading, setLoading] = useState(true);
@@ -18,15 +19,15 @@ const AnalyticsLive = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('adminToken'); // Your auth token
-      
-      const response = await fetch(`${API_URL}/analytics/dashboard?days=${timeRange}`, {
+
+      const response = await fetch(`${getBaseURL()}/api/v1/analytics/dashboard?days=${timeRange}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
 
       if (!response.ok) throw new Error('Failed to fetch analytics');
-      
+
       const data = await response.json();
       setDashboard(data.data);
     } catch (error) {
@@ -69,11 +70,10 @@ const AnalyticsLive = () => {
             <button
               key={days}
               onClick={() => setTimeRange(days)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                timeRange === days
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${timeRange === days
                   ? 'bg-gradient-to-r from-accent-orange to-accent-red text-white'
                   : 'bg-white/5 text-gray-300 hover:text-white hover:bg-white/10'
-              }`}
+                }`}
             >
               {days} Days
             </button>

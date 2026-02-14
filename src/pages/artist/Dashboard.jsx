@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import axios from '@/utils/axios';
+import { useAuth } from '@/context/AuthContext';
 
 const ArtistDashboard = () => {
   const { user } = useAuth();
@@ -192,8 +193,8 @@ const ArtistDashboard = () => {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all duration-200 ${activeTab === tab.id
-                  ? 'bg-white text-dark shadow-lg'
-                  : 'text-gray-400 hover:text-white hover:bg-white/10'
+                ? 'bg-white text-dark shadow-lg'
+                : 'text-gray-400 hover:text-white hover:bg-white/10'
                 }`}
             >
               <span>{tab.icon}</span>

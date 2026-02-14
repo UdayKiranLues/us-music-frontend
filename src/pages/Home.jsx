@@ -29,7 +29,7 @@ const Home = () => {
 
     const fetchPodcasts = async () => {
       try {
-        const response = await axios.get(`/api/v1/podcasts`);
+        const response = await axios.get(`/api/v1/podcasts/feed`);
         console.log('📥 Home: Fetched podcasts:', response.data);
         setPodcasts(response.data.data || []);
       } catch (error) {
@@ -99,7 +99,7 @@ const Home = () => {
             Explore Now
           </motion.button>
         </div>
-        
+
         {/* Decorative elements */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-accent-orange/10 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent-red/10 rounded-full blur-3xl" />

@@ -1,3 +1,4 @@
+import { getBaseURL } from './axios';
 
 /**
  * Resolves the full URL for an image.
@@ -23,7 +24,12 @@ export const getImageUrl = (url) => {
   // Hardcode fix for "Borrowed Time" cover - keep or remove based on needs
   // Removing as absolute URLs should now be handled correctly by backend
 
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const apiUrl = getBaseURL();
+
+  // Fallback for mixed content: if we have a localhost:5000 URL in a non-localhost environment, replace it
+  if (url.includes('localhost:5000') && !window.location.hostname.includes('localhost')) {
+    return url.replace('http://localhost:5000', apiUrl);
+  }
 
   // If the URL already includes the API URL, don't prepend it again
   if (url.startsWith(apiUrl)) {

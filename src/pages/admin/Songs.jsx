@@ -1,10 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Search, Edit2, Trash2, Play, Clock, TrendingUp, RefreshCw } from 'lucide-react';
 import GlassCard from '@/components/admin/GlassCard';
-import { usePlayer } from '@/context/PlayerContext';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+import api from '@/utils/axios';
 
 const Songs = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -21,7 +18,7 @@ const Songs = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get(`${API_URL}/api/v1/songs?limit=50`);
+      const response = await api.get(`/api/v1/songs?limit=50`);
       console.log('📥 Admin Songs: Fetched songs:', response.data);
       const fetchedSongs = response.data.data || [];
       setSongs(fetchedSongs);
@@ -42,7 +39,7 @@ const Songs = () => {
     if (window.confirm('Are you sure you want to delete this song?')) {
       try {
         // Cookies are sent automatically with axios.defaults.withCredentials
-        await axios.delete(`${API_URL}/api/v1/songs/${id}`);
+        await api.delete(`/api/v1/songs/${id}`);
         setSongs(songs.filter((song) => song._id !== id));
       } catch (err) {
         console.error('Failed to delete song:', err);
@@ -193,7 +190,7 @@ const Songs = () => {
                             alt={song.title}
                             className="w-12 h-12 rounded-lg object-cover"
                           />
-                          <div 
+                          <div
                             onClick={() => handlePlay(song)}
                             className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                           >

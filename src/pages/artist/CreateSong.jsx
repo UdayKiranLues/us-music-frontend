@@ -1,10 +1,10 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import axios from 'axios';
+import api from '@/utils/axios';
 import { Upload, Music } from 'lucide-react';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 
 const CreateSong = () => {
   const navigate = useNavigate();
@@ -74,7 +74,7 @@ const CreateSong = () => {
         submitData.append('coverImage', formData.coverImage);
       }
 
-      const response = await axios.post(`${API_URL}/api/v1/artist/songs`, submitData, {
+      const response = await api.post(`/api/v1/artist/songs`, submitData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

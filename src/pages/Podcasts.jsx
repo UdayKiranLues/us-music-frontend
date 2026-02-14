@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import axios from 'axios';
+import api from '@/utils/axios';
 import PodcastCard from '@/components/common/PodcastCard';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 
 const PodcastHome = () => {
   const [podcasts, setPodcasts] = useState([]);
@@ -14,7 +14,7 @@ const PodcastHome = () => {
     const fetchPodcasts = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`${API_URL}/api/v1/podcasts`);
+        const response = await api.get(`/api/v1/podcasts`);
         console.log('📻 Fetched podcasts:', response.data);
         setPodcasts(response.data.data || []);
       } catch (err) {
@@ -71,7 +71,7 @@ const PodcastHome = () => {
             Listen to the best podcasts, interviews, and stories
           </motion.p>
         </div>
-        
+
         {/* Decorative elements */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-accent-blue/10 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent-purple/10 rounded-full blur-3xl" />

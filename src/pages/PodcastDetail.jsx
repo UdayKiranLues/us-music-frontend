@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import axios from 'axios';
+import api from '@/utils/axios';
 import PodcastEpisodeRow from '@/components/common/PodcastEpisodeRow';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 
 const PodcastDetail = () => {
   const { id } = useParams();
@@ -21,12 +21,12 @@ const PodcastDetail = () => {
         setLoading(true);
 
         // Fetch podcast details
-        const podcastRes = await axios.get(`${API_URL}/api/v1/podcasts/${id}`);
+        const podcastRes = await api.get(`/api/v1/podcasts/${id}`);
         setPodcast(podcastRes.data.data);
         console.log('📻 Fetched podcast:', podcastRes.data);
 
         // Fetch episodes
-        const episodesRes = await axios.get(`${API_URL}/api/v1/podcasts/${id}/episodes`);
+        const episodesRes = await api.get(`/api/v1/podcasts/${id}/episodes`);
         setEpisodes(episodesRes.data.data || []);
         console.log('📼 Fetched episodes:', episodesRes.data);
       } catch (err) {

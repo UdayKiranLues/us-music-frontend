@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { User, ArrowLeft, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { getBaseURL } from '@/utils/axios';
 
 export default function ChangeUsername() {
   const navigate = useNavigate();
@@ -32,7 +33,7 @@ export default function ChangeUsername() {
 
     setCheckingUsername(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/v1/auth/check-username/${username}`);
+      const response = await fetch(`${getBaseURL()}/api/v1/auth/check-username/${username}`);
       const data = await response.json();
       setUsernameAvailable(data.available);
     } catch (error) {
@@ -143,9 +144,8 @@ export default function ChangeUsername() {
                     required
                     value={formData.username}
                     onChange={handleChange}
-                    className={`w-full pl-8 pr-4 py-3 bg-white/5 border ${
-                      errors.username ? 'border-red-500/50' : 'border-white/10'
-                    } rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-accent-orange/50 transition-colors`}
+                    className={`w-full pl-8 pr-4 py-3 bg-white/5 border ${errors.username ? 'border-red-500/50' : 'border-white/10'
+                      } rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-accent-orange/50 transition-colors`}
                     placeholder="your_new_username"
                   />
                 </div>

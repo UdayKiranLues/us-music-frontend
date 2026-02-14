@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useRef, useEffect } from 'react';
 import Hls from 'hls.js';
-import axios from 'axios';
+import axios, { getBaseURL } from '../utils/axios';
 
 const PlayerContext = createContext();
 
@@ -15,15 +15,15 @@ export const usePlayer = () => {
 export function PlayerProvider({ children }) {
   // Song playback
   const [currentSong, setCurrentSong] = useState(null);
-  
+
   // Podcast playback
   const [currentPodcast, setCurrentPodcast] = useState(null);
   const [currentEpisode, setCurrentEpisode] = useState(null);
   const [episodeResumePositions, setEpisodeResumePositions] = useState({}); // Track resume position per episode
-  
+
   // Content type flag
   const [contentType, setContentType] = useState('song'); // 'song' | 'podcast'
-  
+
   // Common playback state
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -52,7 +52,7 @@ export function PlayerProvider({ children }) {
       console.log(`🔍 Fetching stream URL for song: ${songId}`);
 
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/v1/songs/${songId}/stream`
+        `${getBaseURL()}/api/v1/songs/${songId}/stream`
       );
 
       const { streamUrl } = response.data.data;
@@ -65,7 +65,7 @@ export function PlayerProvider({ children }) {
       // If backend returned a relative path or a localhost proxy URL (e.g. during dev),
       // rewrite it to use the configured `VITE_API_URL` (or production fallback)
       // so the HLS loader does not attempt to fetch from localhost.
-      const fallbackBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const fallbackBase = getBaseURL();
       let finalStreamUrl = streamUrl;
 
       try {
@@ -93,7 +93,7 @@ export function PlayerProvider({ children }) {
       const isBackendProxy = finalStreamUrl.includes('us-music-backend.vercel.app') || finalStreamUrl.includes('localhost:5000') || finalStreamUrl.includes('music-backend'); // Production or local backend
       const isS3Url = finalStreamUrl.includes('s3.amazonaws.com') || finalStreamUrl.match(/s3\.[a-z0-9-]+\.amazonaws/);
       const isCloudFront = finalStreamUrl.includes('cloudfront.net');
-      
+
       // Valid: CloudFront (optimal), S3 (acceptable), backend proxy (fallback), or localhost (dev)
       const isValidUrl = isCloudFront || isS3Url || isLocalProxy || isBackendProxy;
 
@@ -119,10 +119,10 @@ export function PlayerProvider({ children }) {
       return finalStreamUrl;
     } catch (error) {
       console.error('❌ Failed to fetch stream URL:', error.message);
-      
+
       if (error.response) {
         const { status, data } = error.response;
-        
+
         if (status === 400) {
           throw new Error('Invalid song ID');
         } else if (status === 404) {
@@ -133,7 +133,7 @@ export function PlayerProvider({ children }) {
           throw new Error('Streaming service not configured');
         }
       }
-      
+
       throw error;
     }
   };
@@ -180,18 +180,18 @@ export function PlayerProvider({ children }) {
       hls.on(Hls.Events.ERROR, (event, data) => {
         if (data.fatal) {
           console.error('❌ HLS fatal error:', data.type, data.details);
-          
+
           switch (data.type) {
             case Hls.ErrorTypes.NETWORK_ERROR:
               console.log('🔄 Retrying...');
               hls.startLoad();
               break;
-              
+
             case Hls.ErrorTypes.MEDIA_ERROR:
               console.log('🔄 Recovering media error...');
               hls.recoverMediaError();
               break;
-              
+
             default:
               console.error('💥 Cannot recover from error');
               hls.destroy();
@@ -387,7 +387,7 @@ export function PlayerProvider({ children }) {
     // Song playback
     currentSong,
     setCurrentSong,
-    
+
     // Podcast playback
     currentPodcast,
     setCurrentPodcast,
@@ -395,11 +395,11 @@ export function PlayerProvider({ children }) {
     setCurrentEpisode,
     episodeResumePositions,
     setEpisodeResumePositions,
-    
+
     // Content type
     contentType,
     setContentType,
-    
+
     // Common playback state
     isPlaying,
     currentTime,
