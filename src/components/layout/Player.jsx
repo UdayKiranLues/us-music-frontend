@@ -112,7 +112,7 @@ const Player = () => {
                 className="relative flex-shrink-0"
               >
                 <img
-                  src={getImageUrl(currentSong.coverUrl)}
+                  src={getImageUrl(currentSong.coverUrl || currentSong.coverImageUrl || currentSong.coverImage)}
                   alt={`${currentSong.title} album cover`}
                   className="w-16 h-16 rounded-xl object-cover shadow-xl"
                 />

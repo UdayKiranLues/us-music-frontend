@@ -12,8 +12,8 @@ const SongCard = memo(({ song, playlist = [], index = 0 }) => {
 
   // Fallback to original URL or null to handle custom placeholder logic
   const displayCoverUrl = useMemo(() => {
-    return getImageUrl(coverUrl || song.coverImageUrl);
-  }, [coverUrl, song.coverImageUrl]);
+    return getImageUrl(coverUrl || song.coverImageUrl || song.coverImage || song.coverUrl);
+  }, [coverUrl, song.coverImageUrl, song.coverImage, song.coverUrl]);
 
   const handlePlay = () => {
     if (isCurrentSong) {

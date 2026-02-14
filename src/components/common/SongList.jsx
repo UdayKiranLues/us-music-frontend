@@ -34,8 +34,8 @@ const SongListItem = memo(({ song, index, isCurrentSong, isPlaying, showIndex, o
   const { coverUrl } = useSongCoverUrl(song._id || song.id);
 
   const displayCoverUrl = useMemo(() => {
-    return getImageUrl(coverUrl || song.coverUrl);
-  }, [coverUrl, song.coverUrl]);
+    return getImageUrl(coverUrl || song.coverUrl || song.coverImageUrl || song.coverImage) || 'https://via.placeholder.com/100';
+  }, [coverUrl, song.coverUrl, song.coverImageUrl, song.coverImage]);
 
   return (
     <motion.div

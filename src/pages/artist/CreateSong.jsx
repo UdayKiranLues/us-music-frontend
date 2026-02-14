@@ -83,7 +83,8 @@ const CreateSong = () => {
         submitData.append('coverImage', formData.coverImage);
       }
 
-      const response = await api.post(`/api/v1/artist/songs`, submitData, {
+      // Using the dedicated upload-with-cover endpoint which handles processing and S3 upload
+      const response = await api.post(`/api/v1/upload/song-with-cover`, submitData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

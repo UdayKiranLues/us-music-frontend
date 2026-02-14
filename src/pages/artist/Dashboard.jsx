@@ -250,8 +250,8 @@ const ArtistDashboard = () => {
                       <div className="bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden hover:border-accent-purple/50 transition-all duration-300">
                         {/* Cover Image */}
                         <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-accent-purple/20 to-accent-blue/20">
-                          {podcast.coverImage ? (
-                            <img src={getImageUrl(podcast.coverImage)} alt={podcast.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                          {podcast.coverImage || podcast.coverImageUrl ? (
+                            <img src={getImageUrl(podcast.coverImage || podcast.coverImageUrl)} alt={podcast.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
                               <span className="text-6xl">🎙️</span>
@@ -335,8 +335,8 @@ const ArtistDashboard = () => {
                     <div className="bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden hover:border-accent-orange/50 transition-all duration-300">
                       {/* Cover Image */}
                       <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-accent-orange/20 to-accent-red/20">
-                        {song.coverImage ? (
-                          <img src={getImageUrl(song.coverImage)} alt={song.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                        {song.coverImageUrl || song.coverImage ? (
+                          <img src={getImageUrl(song.coverImageUrl || song.coverImage)} alt={song.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             <span className="text-6xl">🎵</span>

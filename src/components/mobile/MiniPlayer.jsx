@@ -21,8 +21,8 @@ export default function MiniPlayer({
   const { coverUrl } = useSongCoverUrl(currentSong?._id);
 
   const displayCoverUrl = useMemo(() => {
-    return getImageUrl(coverUrl || currentSong?.coverImageUrl) || 'https://via.placeholder.com/100';
-  }, [coverUrl, currentSong?.coverImageUrl]);
+    return getImageUrl(coverUrl || currentSong?.coverImageUrl || currentSong?.coverImage || currentSong?.coverUrl) || 'https://via.placeholder.com/400';
+  }, [coverUrl, currentSong?.coverImageUrl, currentSong?.coverImage, currentSong?.coverUrl]);
 
   if (!currentSong) return null;
 

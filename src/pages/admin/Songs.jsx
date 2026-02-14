@@ -187,7 +187,7 @@ const Songs = () => {
                       <div className="flex items-center space-x-3">
                         <div className="relative group">
                           <img
-                            src={getImageUrl(song.coverImageUrl) || 'https://via.placeholder.com/100'}
+                            src={getImageUrl(song.coverImageUrl || song.coverUrl || song.coverImage) || 'https://via.placeholder.com/100'}
                             alt={song.title}
                             className="w-12 h-12 rounded-lg object-cover"
                           />

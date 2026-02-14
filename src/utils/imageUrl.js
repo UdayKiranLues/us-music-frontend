@@ -38,3 +38,19 @@ export const getImageUrl = (url) => {
 
   return `${apiUrl}${normalizedPath}`;
 };
+
+/**
+ * Resolves the cover image URL for both Songs and Podcasts.
+ * Handles backend field name inconsistencies (coverImageUrl vs coverImage).
+ * 
+ * @param {Object} content - The song or podcast object.
+ * @returns {string} - The resolved absolute URL or null.
+ */
+export const resolveCoverUrl = (content) => {
+  if (!content) return null;
+
+  // Try common field names
+  const rawUrl = content.coverImageUrl || content.coverImage || content.coverUrl;
+
+  return getImageUrl(rawUrl);
+};
