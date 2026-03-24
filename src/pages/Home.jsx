@@ -5,6 +5,7 @@ import axios from '@/utils/axios';
 import SongCard from '@/components/common/SongCard';
 import SongList from '@/components/common/SongList';
 import PodcastCard from '@/components/common/PodcastCard';
+import { getTrendingTracks, formatAudiusTrack } from '@/utils/audiusApi';
 
 const Home = () => {
   const [songs, setSongs] = useState([]);
@@ -15,13 +16,15 @@ const Home = () => {
   useEffect(() => {
     const fetchSongs = async () => {
       try {
-        const response = await axios.get(`/api/v1/songs?limit=50`);
-        console.log('📥 Home: Fetched songs:', response.data);
-        const fetchedSongs = response.data.data || [];
-        setSongs(fetchedSongs);
-        if (fetchedSongs.length === 0) console.log("BACKEND RETURNED EMPTY");
+        const audiusTracks = await getTrendingTracks();
+        console.log('📥 Home: Fetched Audius trending tracks:', audiusTracks);
+        
+        // Format them to match our Song model structure
+        const formattedSongs = audiusTracks.map(formatAudiusTrack);
+        
+        setSongs(formattedSongs);
       } catch (error) {
-        console.error('❌ Home: Failed to fetch songs:', error);
+        console.error('❌ Home: Failed to fetch Audius tracks:', error);
       } finally {
         setLoading(false);
       }
@@ -43,8 +46,9 @@ const Home = () => {
     fetchPodcasts();
   }, []);
 
-  const trendingSongs = songs.filter(song => song.totalPlays > 0).slice(0, 10);
-  const recommendedSongs = songs.slice(0, 10);
+  // For Audius, the array itself is trending, but we'll simulate the UI
+  const trendingSongs = songs.slice(0, 10).map(s => ({ ...s, trending: true }));
+  const recommendedSongs = songs.slice(10, 20).map(s => ({ ...s, recommended: true }));
 
   const containerVariants = {
     hidden: { opacity: 0 },

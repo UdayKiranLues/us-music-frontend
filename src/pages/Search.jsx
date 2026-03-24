@@ -1,23 +1,64 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { songs, genres } from '@/data/mockData';
+import { genres } from '@/data/mockData';
 import SongCard from '@/components/common/SongCard';
 import SongList from '@/components/common/SongList';
+import { searchTracks, getTrendingTracks, formatAudiusTrack } from '@/utils/audiusApi';
 
 const Search = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGenre, setSelectedGenre] = useState('All');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  
+  const [searchResults, setSearchResults] = useState([]);
+  const [trendingResults, setTrendingResults] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const filteredSongs = songs.filter(song => {
-    const matchesSearch =
-      song.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      song.artist.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      song.album.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesGenre = selectedGenre === 'All' || song.genre === selectedGenre;
-    
-    return matchesSearch && matchesGenre;
+  // Initial load of trending tracks (as a default explore view)
+  useEffect(() => {
+    const fetchTrending = async () => {
+      try {
+        const trending = await getTrendingTracks();
+        setTrendingResults(trending.map(formatAudiusTrack));
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    fetchTrending();
+  }, []);
+
+  // Debounced Search
+  useEffect(() => {
+    const fetchResults = async () => {
+      if (!searchQuery.trim()) {
+        setSearchResults([]);
+        return;
+      }
+      
+      setLoading(true);
+      try {
+        const results = await searchTracks(searchQuery);
+        setSearchResults(results.map(formatAudiusTrack));
+      } catch (error) {
+        console.error('Search error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const timeoutId = setTimeout(() => {
+      fetchResults();
+    }, 600); // 600ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
+
+  const sourceSongs = searchQuery.trim() ? searchResults : trendingResults;
+  
+  const filteredSongs = sourceSongs.filter(song => {
+    // Audius genres might not perfectly match local mock genres, so case-insensitive match
+    if (selectedGenre === 'All') return true;
+    return song.genre.some(g => g.toLowerCase() === selectedGenre.toLowerCase());
   });
 
   return (
@@ -138,7 +179,11 @@ const Search = () => {
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.3 }}
       >
-        {filteredSongs.length > 0 ? (
+        {loading ? (
+          <div className="text-center py-20">
+            <h3 className="text-2xl font-bold text-white mb-2">Searching...</h3>
+          </div>
+        ) : filteredSongs.length > 0 ? (
           viewMode === 'grid' ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {filteredSongs.map(song => (
