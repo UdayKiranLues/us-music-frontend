@@ -18,10 +18,10 @@ export default function MiniPlayer({
   isFavorite = false,
   progress = 0,
 }) {
-  const { coverUrl } = useSongCoverUrl(currentSong?._id);
+  const { coverUrl } = useSongCoverUrl(currentSong?._id, currentSong?.coverImageUrl || currentSong?.coverImage || currentSong?.coverUrl);
 
   const displayCoverUrl = useMemo(() => {
-    return getImageUrl(coverUrl || currentSong?.coverImageUrl || currentSong?.coverImage || currentSong?.coverUrl) || 'https://via.placeholder.com/400';
+    return getImageUrl(coverUrl || currentSong?.coverImageUrl || currentSong?.coverImage || currentSong?.coverUrl) || 'https://placehold.co/400';
   }, [coverUrl, currentSong?.coverImageUrl, currentSong?.coverImage, currentSong?.coverUrl]);
 
   if (!currentSong) return null;
@@ -55,8 +55,8 @@ export default function MiniPlayer({
             alt={currentSong.title}
             className="w-full h-full object-cover"
             onError={(e) => {
-              if (e.target.src !== 'https://via.placeholder.com/100') {
-                e.target.src = 'https://via.placeholder.com/100';
+              if (e.target.src !== 'https://placehold.co/100') {
+                e.target.src = 'https://placehold.co/100';
               }
             }}
           />

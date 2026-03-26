@@ -14,7 +14,7 @@ const Albums = () => {
       artist: 'Various Artists',
       tracks: 12,
       releaseDate: '2024-06-15',
-      coverUrl: 'https://via.placeholder.com/300',
+      coverUrl: 'https://placehold.co/300',
       status: 'Published',
     },
     {
@@ -23,7 +23,7 @@ const Albums = () => {
       artist: 'DJ Shadow',
       tracks: 8,
       releaseDate: '2024-03-20',
-      coverUrl: 'https://via.placeholder.com/300',
+      coverUrl: 'https://placehold.co/300',
       status: 'Published',
     },
   ]);

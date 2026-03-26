@@ -38,10 +38,10 @@ export default function MobilePlayer({
   const [isDragging, setIsDragging] = useState(false);
   const controls = useAnimation();
   const constraintsRef = useRef(null);
-  const { coverUrl } = useSongCoverUrl(currentSong?._id);
+  const { coverUrl } = useSongCoverUrl(currentSong?._id, currentSong?.coverImageUrl || currentSong?.coverImage || currentSong?.coverUrl);
 
   const displayCoverUrl = useMemo(() => {
-    return getImageUrl(coverUrl || currentSong?.coverImageUrl || currentSong?.coverImage || currentSong?.coverUrl) || 'https://via.placeholder.com/400';
+    return getImageUrl(coverUrl || currentSong?.coverImageUrl || currentSong?.coverImage || currentSong?.coverUrl) || 'https://placehold.co/400';
   }, [coverUrl, currentSong?.coverImageUrl, currentSong?.coverImage, currentSong?.coverUrl]);
 
   // Swipe handlers
@@ -128,8 +128,8 @@ export default function MobilePlayer({
             alt={currentSong.title}
             className="w-full h-full object-cover"
             onError={(e) => {
-              if (e.target.src !== 'https://via.placeholder.com/400') {
-                e.target.src = 'https://via.placeholder.com/400';
+              if (e.target.src !== 'https://placehold.co/400') {
+                e.target.src = 'https://placehold.co/400';
               }
             }}
           />

@@ -52,10 +52,10 @@ const SongListItem = memo(({ song, index, isCurrentSong, isPlaying, showIndex, o
       showToast(err.response?.data?.error || 'Failed to delete song', '❌');
     }
   };
-  const { coverUrl } = useSongCoverUrl(song._id || song.id);
+  const { coverUrl } = useSongCoverUrl(song._id || song.id, song?.coverImageUrl || song?.coverImage || song?.coverUrl);
 
   const displayCoverUrl = useMemo(() => {
-    return getImageUrl(coverUrl || song.coverUrl || song.coverImageUrl || song.coverImage) || 'https://via.placeholder.com/100';
+    return getImageUrl(coverUrl || song.coverUrl || song.coverImageUrl || song.coverImage) || 'https://placehold.co/100';
   }, [coverUrl, song.coverUrl, song.coverImageUrl, song.coverImage]);
 
   return (

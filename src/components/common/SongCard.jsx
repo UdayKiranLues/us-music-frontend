@@ -6,7 +6,7 @@ import { getImageUrl } from '@/utils/imageUrl';
 
 const SongCard = memo(({ song, playlist = [], index = 0 }) => {
   const { playSong, currentSong, isPlaying, replaceQueue } = usePlayer();
-  const { coverUrl, error: coverError } = useSongCoverUrl(song._id);
+  const { coverUrl, error: coverError } = useSongCoverUrl(song._id, song?.coverImageUrl || song?.coverImage || song?.coverUrl);
 
   const isCurrentSong = currentSong?._id === song._id;
 

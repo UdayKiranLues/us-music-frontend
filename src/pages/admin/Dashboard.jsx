@@ -45,21 +45,21 @@ const Dashboard = () => {
       title: 'Sunset Dreams',
       artist: 'Luna Wave',
       plays: 15234,
-      coverUrl: 'https://via.placeholder.com/100',
+      coverUrl: 'https://placehold.co/100',
     },
     {
       id: 2,
       title: 'Ocean Breeze',
       artist: 'Coral Reef',
       plays: 12456,
-      coverUrl: 'https://via.placeholder.com/100',
+      coverUrl: 'https://placehold.co/100',
     },
     {
       id: 3,
       title: 'Midnight Echo',
       artist: 'DJ Shadow',
       plays: 8921,
-      coverUrl: 'https://via.placeholder.com/100',
+      coverUrl: 'https://placehold.co/100',
     },
   ];
 

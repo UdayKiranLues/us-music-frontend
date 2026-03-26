@@ -279,7 +279,7 @@ const CreateAlbum = () => {
                                                     src={api.defaults.baseURL + (song.coverImageUrl?.startsWith('/') ? '' : '/') + song.coverImageUrl}
                                                     alt={song.title}
                                                     className="w-12 h-12 rounded-lg object-cover"
-                                                    onError={(e) => { e.target.src = 'https://via.placeholder.com/150?text=Song'; }}
+                                                    onError={(e) => { e.target.src = 'https://placehold.co/150?text=Song'; }}
                                                 />
                                                 {isSelected && (
                                                     <div className="absolute inset-0 bg-accent-blue/40 flex items-center justify-center rounded-lg">

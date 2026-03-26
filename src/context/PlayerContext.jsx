@@ -231,15 +231,16 @@ export function PlayerProvider({ children }) {
 
       setCurrentSong(song);
 
-      // Fetch URL
-      url = await fetchSecureStreamUrl(songId);
+      // Fetch playback stream URL
+      const playbackStreamUrl = await fetchSecureStreamUrl(songId);
+      console.log('✅ Stream URL successfully fetched:', playbackStreamUrl);
 
-      if (!url) {
+      if (!playbackStreamUrl) {
         throw new Error('Failed to get stream URL');
       }
 
       // Initialize HLS player or native HTML5 audio
-      initializeHLS(url);
+      initializeHLS(playbackStreamUrl);
 
       if (autoPlay) {
         setTimeout(() => {
