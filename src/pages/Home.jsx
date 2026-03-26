@@ -5,7 +5,7 @@ import axios from '@/utils/axios';
 import SongCard from '@/components/common/SongCard';
 import SongList from '@/components/common/SongList';
 import PodcastCard from '@/components/common/PodcastCard';
-import { getTrendingTracks, formatAudiusTrack } from '@/utils/audiusApi';
+
 
 const Home = () => {
   const [songs, setSongs] = useState([]);
@@ -16,15 +16,12 @@ const Home = () => {
   useEffect(() => {
     const fetchSongs = async () => {
       try {
-        const audiusTracks = await getTrendingTracks();
-        console.log('📥 Home: Fetched Audius trending tracks:', audiusTracks);
+        const response = await axios.get('/api/v1/songs');
+        console.log('📥 Home: Fetched songs:', response.data);
         
-        // Format them to match our Song model structure
-        const formattedSongs = audiusTracks.map(formatAudiusTrack);
-        
-        setSongs(formattedSongs);
+        setSongs(response.data.data || []);
       } catch (error) {
-        console.error('❌ Home: Failed to fetch Audius tracks:', error);
+        console.error('❌ Home: Failed to fetch songs:', error);
       } finally {
         setLoading(false);
       }

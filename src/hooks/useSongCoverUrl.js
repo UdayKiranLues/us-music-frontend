@@ -9,10 +9,6 @@ export function useSongCoverUrl(songId) {
   useEffect(() => {
     if (!songId) return;
     
-    // Bypass backend for Audius tracks which already provide direct URLs
-    if (songId.toString().startsWith('audius-')) {
-      return;
-    }
 
     let isMounted = true;
     setLoading(true);

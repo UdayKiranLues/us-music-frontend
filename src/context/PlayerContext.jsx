@@ -232,30 +232,14 @@ export function PlayerProvider({ children }) {
       setCurrentSong(song);
 
       // Fetch URL
-      let url;
-      if (song.isAudius) {
-        const { getAudiusStreamUrl } = await import('../utils/audiusApi.js');
-        // Audius tracks store their raw ID in taskId
-        url = await getAudiusStreamUrl(song.taskId || song.id.replace('audius-', ''));
-      } else {
-        url = await fetchSecureStreamUrl(songId);
-      }
+      url = await fetchSecureStreamUrl(songId);
 
       if (!url) {
         throw new Error('Failed to get stream URL');
       }
 
       // Initialize HLS player or native HTML5 audio
-      if (song.isAudius) {
-        if (hlsRef.current) {
-          hlsRef.current.destroy();
-          hlsRef.current = null;
-        }
-        audioRef.current.src = url;
-        console.log('✅ Playing Audius native HTTP stream');
-      } else {
-        initializeHLS(url);
-      }
+      initializeHLS(url);
 
       if (autoPlay) {
         setTimeout(() => {

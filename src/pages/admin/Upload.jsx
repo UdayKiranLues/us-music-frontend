@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { Upload as UploadIcon, X, CheckCircle, AlertCircle, Music, Image as ImageIcon } from 'lucide-react';
 import axios from '@/utils/axios';
 import GlassCard from '@/components/admin/GlassCard';
+import BulkUpload from '@/components/admin/BulkUpload';
 
 const Upload = () => {
+  const [activeTab, setActiveTab] = useState('single');
   const navigate = useNavigate();
   const [audioFile, setAudioFile] = useState(null);
   const [coverFile, setCoverFile] = useState(null);
@@ -150,7 +152,24 @@ const Upload = () => {
         <p className="text-gray-400">Upload and manage your music files with metadata</p>
       </div>
 
+      {/* Tabs */}
+      <div className="flex space-x-4 mb-6">
+        <button
+          onClick={() => setActiveTab('single')}
+          className={`px-6 py-2 rounded-xl font-medium transition-colors ${activeTab === 'single' ? 'bg-accent-orange text-white' : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'}`}
+        >
+          Single Upload
+        </button>
+        <button
+          onClick={() => setActiveTab('bulk')}
+          className={`px-6 py-2 rounded-xl font-medium transition-colors ${activeTab === 'bulk' ? 'bg-accent-orange text-white' : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'}`}
+        >
+          Bulk Upload (up to 500)
+        </button>
+      </div>
+
       {/* Upload Form */}
+      {activeTab === 'single' ? (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* File Upload Section */}
         <GlassCard className="p-6">
@@ -413,6 +432,9 @@ const Upload = () => {
           </form>
         </GlassCard>
       </div>
+      ) : (
+        <BulkUpload />
+      )}
     </div>
   );
 };

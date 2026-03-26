@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { genres } from '@/data/mockData';
 import SongCard from '@/components/common/SongCard';
 import SongList from '@/components/common/SongList';
-import { searchTracks, getTrendingTracks, formatAudiusTrack } from '@/utils/audiusApi';
+import axios from '@/utils/axios';
 
 const Search = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -18,8 +18,8 @@ const Search = () => {
   useEffect(() => {
     const fetchTrending = async () => {
       try {
-        const trending = await getTrendingTracks();
-        setTrendingResults(trending.map(formatAudiusTrack));
+        const response = await axios.get('/api/v1/songs');
+        setTrendingResults(response.data.data || []);
       } catch (e) {
         console.error(e);
       }
@@ -37,8 +37,8 @@ const Search = () => {
       
       setLoading(true);
       try {
-        const results = await searchTracks(searchQuery);
-        setSearchResults(results.map(formatAudiusTrack));
+        const response = await axios.get(`/api/v1/songs?search=${searchQuery}`);
+        setSearchResults(response.data.data || []);
       } catch (error) {
         console.error('Search error:', error);
       } finally {
