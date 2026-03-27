@@ -19,25 +19,26 @@ export default defineConfig({
       },
       manifest: {
         name: 'US Music',
-        short_name: 'US Music',
+        short_name: 'USMusic',
         description: 'A modern, responsive music streaming platform.',
         theme_color: '#0f0f11',
         background_color: '#0f0f11',
         display: 'standalone',
         orientation: 'portrait',
+        start_url: '/',
         icons: [
           {
-            src: 'https://placehold.co/192',
+            src: '/borrowed-time.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: 'https://placehold.co/512',
+            src: '/borrowed-time.png',
             sizes: '512x512',
             type: 'image/png'
           },
           {
-            src: 'https://placehold.co/512',
+            src: '/borrowed-time.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'
