@@ -190,7 +190,7 @@ export function AuthProvider({ children }) {
 
   const isAdmin = () => user?.role === "admin";
   const isArtist = () => ["artist", "admin"].includes(user?.role);
-  const needsRoleSelection = () => isAuthenticated && !user?.role;
+  const needsRoleSelection = () => isAuthenticated && user?.role !== "admin" && user?.roleSelected === false;
 
   const value = {
     user,
