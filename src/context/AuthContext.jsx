@@ -65,7 +65,7 @@ export function AuthProvider({ children }) {
         throw new Error("Invalid login response structure");
       }
 
-      const { user, token, redirectTo } = payload;
+      const { user, token } = payload;
 
       console.log("✅ Login success:", user);
 
@@ -75,11 +75,19 @@ export function AuthProvider({ children }) {
       setUser(user);
       setIsAuthenticated(true);
 
-      if (navigate) {
-        navigate(redirectTo || "/home");
+      // Enforce role-based routing on the frontend
+      let route = "/home";
+      if (user?.role === "admin") {
+        route = "/admin";
+      } else if (user?.role === "artist") {
+        route = "/artist/dashboard";
       }
 
-      return { success: true, user, redirectTo };
+      if (navigate) {
+        navigate(route);
+      }
+
+      return { success: true, user, redirectTo: route };
     } catch (error) {
       console.error("❌ Login failed:", error.response?.data || error.message);
 
