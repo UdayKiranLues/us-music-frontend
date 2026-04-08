@@ -14,7 +14,10 @@ export const usePlayer = () => {
 
 export function PlayerProvider({ children }) {
   // Song playback
-  const [currentSong, setCurrentSong] = useState(null);
+  const [currentSong, setCurrentSong] = useState(() => {
+    const saved = localStorage.getItem('us-music-currentSong');
+    try { return saved ? JSON.parse(saved) : null; } catch { return null; }
+  });
 
   // Podcast playback
   const [currentPodcast, setCurrentPodcast] = useState(null);
@@ -26,11 +29,23 @@ export function PlayerProvider({ children }) {
 
   // Common playback state
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
+  const [currentTime, setCurrentTime] = useState(() => {
+    const saved = localStorage.getItem('us-music-currentTime');
+    return saved ? parseFloat(saved) : 0;
+  });
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(0.7);
-  const [queue, setQueue] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [volume, setVolume] = useState(() => {
+    const saved = localStorage.getItem('us-music-volume');
+    return saved ? parseFloat(saved) : 0.7;
+  });
+  const [queue, setQueue] = useState(() => {
+    const saved = localStorage.getItem('us-music-queue');
+    try { return saved ? JSON.parse(saved) : []; } catch { return []; }
+  });
+  const [currentIndex, setCurrentIndex] = useState(() => {
+    const saved = localStorage.getItem('us-music-currentIndex');
+    return saved ? parseInt(saved, 10) : 0;
+  });
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [streamUrl, setStreamUrl] = useState(null);
   const [urlExpiresAt, setUrlExpiresAt] = useState(null);
@@ -257,8 +272,25 @@ export function PlayerProvider({ children }) {
   /**
    * Play/Pause toggle
    */
-  const togglePlayPause = () => {
+  const togglePlayPause = async () => {
     const audio = audioRef.current;
+    
+    // If initialized from localStorage but stream not loaded yet
+    if (currentSong && !audio.src && !hlsRef.current) {
+      try {
+        await playSong(currentSong, true);
+        // Seek to saved position if available
+        if (currentTime > 0) {
+          setTimeout(() => {
+            audio.currentTime = currentTime;
+          }, 300);
+        }
+      } catch (e) {
+        console.error("Failed to restore playback", e);
+      }
+      return;
+    }
+
     if (isPlaying) {
       audio.pause();
       setIsPlaying(false);
@@ -337,6 +369,10 @@ export function PlayerProvider({ children }) {
 
     const handleTimeUpdate = () => {
       setCurrentTime(audio.currentTime);
+      // Throttle localStorage writes to roughly every 2 seconds
+      if (Math.floor(audio.currentTime) % 2 === 0) {
+        localStorage.setItem('us-music-currentTime', audio.currentTime.toString());
+      }
     };
 
     const handleLoadedMetadata = () => {
@@ -350,10 +386,16 @@ export function PlayerProvider({ children }) {
 
     const handlePlay = () => {
       setIsPlaying(true);
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = 'playing';
+      }
     };
 
     const handlePause = () => {
       setIsPlaying(false);
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = 'paused';
+      }
     };
 
     audio.addEventListener('timeupdate', handleTimeUpdate);
@@ -383,6 +425,55 @@ export function PlayerProvider({ children }) {
       audioRef.current.pause();
     };
   }, []);
+
+  // Persistence Effects
+  useEffect(() => {
+    if (currentSong) {
+      localStorage.setItem('us-music-currentSong', JSON.stringify(currentSong));
+      
+      // Update MediaSession Metadata
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: currentSong.title || 'Unknown Title',
+          artist: currentSong.artist || 'Unknown Artist',
+          album: currentSong.album || 'Unknown Album',
+          artwork: [
+            {
+              src: currentSong.thumbnail || currentSong.coverUrl || 'https://via.placeholder.com/512',
+              sizes: '512x512',
+              type: 'image/jpeg',
+            },
+          ],
+        });
+      }
+    }
+  }, [currentSong]);
+
+  useEffect(() => {
+    if (queue && queue.length > 0) {
+      localStorage.setItem('us-music-queue', JSON.stringify(queue));
+    }
+  }, [queue]);
+
+  useEffect(() => {
+    localStorage.setItem('us-music-currentIndex', currentIndex.toString());
+  }, [currentIndex]);
+
+  useEffect(() => {
+    localStorage.setItem('us-music-volume', volume.toString());
+    audioRef.current.volume = volume;
+  }, [volume]);
+
+  // MediaSession Action Handlers
+  useEffect(() => {
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.setActionHandler('play', togglePlayPause);
+      navigator.mediaSession.setActionHandler('pause', togglePlayPause);
+      navigator.mediaSession.setActionHandler('previoustrack', playPrevious);
+      navigator.mediaSession.setActionHandler('nexttrack', playNext);
+      navigator.mediaSession.setActionHandler('seekto', (details) => seekTo(details.seekTime || 0));
+    }
+  }, [queue, currentIndex, isPlaying, currentSong]);
 
   const value = {
     // Song playback
