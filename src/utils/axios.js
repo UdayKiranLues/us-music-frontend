@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const getBaseURL = () => {
-  let url = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  let url = import.meta.env.VITE_API_URL || "https://us-music-backend.vercel.app";
   // If URL doesn't start with http/https, prepend https:// (common for environment variables on Vercel)
   if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
     console.warn(`⚠️ VITE_API_URL "${url}" missing protocol. Prepending https://`);
