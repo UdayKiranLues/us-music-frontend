@@ -8,12 +8,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@anuradev/capacitor-background-mode": "^7.2.1",
     "@capacitor/core": "^8.3.0",
     "@capgo/native-audio": "^8.3.11",
     "axios": "^1.6.2",
     "framer-motion": "^10.16.16",
-    "hls.js": "^1.5.15",
     "lucide-react": "^0.562.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

@@ -1,8 +1,5 @@
 import { createContext, useContext, useState, useRef, useEffect } from 'react';
-import Hls from 'hls.js';
 import axios, { getBaseURL } from '../utils/axios';
-import { Capacitor } from '@capacitor/core';
-import { BackgroundMode } from '@anuradev/capacitor-background-mode';
 import { NativeAudio } from '@capgo/native-audio';
 
 const PlayerContext = createContext();
@@ -51,8 +48,6 @@ export function PlayerProvider({ children }) {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [streamUrl, setStreamUrl] = useState(null);
 
-  const audioRef = useRef(new Audio());
-  const hlsRef = useRef(null);
   const nativeSyncIntervalRef = useRef(null);
 
   /**
@@ -96,28 +91,7 @@ export function PlayerProvider({ children }) {
   };
 
   /**
-   * Initialize Web HTML5 HLS player (Web Fallback)
-   */
-  const initializeHLS = (url) => {
-    const audio = audioRef.current;
-    if (hlsRef.current) hlsRef.current.destroy();
-
-    if (Hls.isSupported()) {
-      const hls = new Hls({
-        enableWorker: true,
-        lowLatencyMode: false,
-      });
-
-      hls.loadSource(url);
-      hls.attachMedia(audio);
-      hlsRef.current = hls;
-    } else if (audio.canPlayType('application/vnd.apple.mpegurl')) {
-      audio.src = url;
-    }
-  };
-
-  /**
-   * Play song via Native ExoPlayer or Web HLS
+   * Play song via Native ExoPlayer
    */
   const playSong = async (song, autoPlay = true) => {
     try {
@@ -128,37 +102,21 @@ export function PlayerProvider({ children }) {
       setCurrentSong(song);
       const playbackStreamUrl = await fetchSecureStreamUrl(songId);
 
-      if (Capacitor.isNativePlatform()) {
-        // --- NATIVE SPOTIFY-LIKE EXOPLAYER ---
-        try {
-          // Unload previous
-          await NativeAudio.unload({ assetId: 'currentSong' }).catch(() => {});
-          
-          await NativeAudio.preload({
-            assetId: 'currentSong',
-            assetPath: playbackStreamUrl,
-            isUrl: true,
-            audioChannelNum: 1,
-            volume: volume
-          });
-          
-          if (autoPlay) {
-            await NativeAudio.play({ assetId: 'currentSong' });
-            setIsPlaying(true);
-            startNativeSync();
-          }
-        } catch (nativeErr) {
-          console.error("NativeAudio failed, this is unexpected:", nativeErr);
-        }
-      } else {
-        // --- WEB HTML5 HLS ---
-        initializeHLS(playbackStreamUrl);
-        if (autoPlay) {
-          setTimeout(() => {
-            audioRef.current.play();
-            setIsPlaying(true);
-          }, 100);
-        }
+      // Unload previous
+      await NativeAudio.unload({ assetId: 'currentSong' }).catch(() => {});
+      
+      await NativeAudio.preload({
+        assetId: 'currentSong',
+        assetPath: playbackStreamUrl,
+        isUrl: true,
+        audioChannelNum: 1,
+        volume: volume
+      });
+      
+      if (autoPlay) {
+        await NativeAudio.play({ assetId: 'currentSong' });
+        setIsPlaying(true);
+        startNativeSync();
       }
     } catch (error) {
       console.error('❌ Failed to play song:', error.message);
@@ -175,24 +133,14 @@ export function PlayerProvider({ children }) {
       return;
     }
 
-    if (Capacitor.isNativePlatform()) {
-      if (isPlaying) {
-        await NativeAudio.pause({ assetId: 'currentSong' }).catch(() => {});
-        setIsPlaying(false);
-      } else {
-        await NativeAudio.play({ assetId: 'currentSong' }).catch(() => {});
-        setIsPlaying(true);
-        startNativeSync();
-      }
+    if (isPlaying) {
+      await NativeAudio.pause({ assetId: 'currentSong' }).catch(() => {});
+      setIsPlaying(false);
+      if (nativeSyncIntervalRef.current) clearInterval(nativeSyncIntervalRef.current);
     } else {
-      const audio = audioRef.current;
-      if (isPlaying) {
-        audio.pause();
-        setIsPlaying(false);
-      } else {
-        audio.play();
-        setIsPlaying(true);
-      }
+      await NativeAudio.play({ assetId: 'currentSong' }).catch(() => {});
+      setIsPlaying(true);
+      startNativeSync();
     }
   };
 
@@ -219,14 +167,7 @@ export function PlayerProvider({ children }) {
    * Seek to position
    */
   const seekTo = async (time) => {
-    if (Capacitor.isNativePlatform()) {
-      await NativeAudio.getCurrentTime({ assetId: 'currentSong', time: time }).catch(() => {}); // NOTE: capgo might use play({time: time}) instead, but set/get time works differently. Assuming time is handled.
-      // *Correction: capgo native audio seek is typically via NativeAudio.play({ time }) or NativeAudio.seek
-      // Actually capgo NativeAudio usually doesn't expose a direct seek, but play({time}) seeks.
-      await NativeAudio.play({ assetId: 'currentSong', time: time }).catch(()=>{});
-    } else {
-      audioRef.current.currentTime = time;
-    }
+    await NativeAudio.play({ assetId: 'currentSong', time: time }).catch(()=>{});
     setCurrentTime(time);
   };
 
@@ -235,11 +176,7 @@ export function PlayerProvider({ children }) {
    */
   const changeVolume = async (newVolume) => {
     setVolume(newVolume);
-    if (Capacitor.isNativePlatform()) {
-      await NativeAudio.setVolume({ assetId: 'currentSong', volume: newVolume }).catch(()=>{});
-    } else {
-      audioRef.current.volume = newVolume;
-    }
+    await NativeAudio.setVolume({ assetId: 'currentSong', volume: newVolume }).catch(()=>{});
   };
 
   const playNext = () => {
@@ -268,78 +205,29 @@ export function PlayerProvider({ children }) {
 
   const toggleFullScreen = () => setIsFullScreen((prev) => !prev);
 
-  // Web Audio element event listeners
+  // Native Audio completion listener
   useEffect(() => {
-    if (Capacitor.isNativePlatform()) {
-       // Register native completion listener
-       const listener = NativeAudio.addListener('complete', () => {
-          setIsPlaying(false);
-          playNext();
-       });
-       return () => {
-         // listener.remove();
-       }
-    }
-
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
-    const handleLoadedMetadata = () => setDuration(audio.duration);
-    const handleEnded = () => { setIsPlaying(false); playNext(); };
-    const handlePlay = () => setIsPlaying(true);
-    const handlePause = () => setIsPlaying(false);
-
-    audio.addEventListener('timeupdate', handleTimeUpdate);
-    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
-    audio.addEventListener('ended', handleEnded);
-    audio.addEventListener('play', handlePlay);
-    audio.addEventListener('pause', handlePause);
+    let listener = null;
+    const setupListener = async () => {
+      listener = await NativeAudio.addListener('complete', () => {
+        setIsPlaying(false);
+        playNext();
+      });
+    };
+    setupListener();
 
     return () => {
-      audio.removeEventListener('timeupdate', handleTimeUpdate);
-      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
-      audio.removeEventListener('ended', handleEnded);
-      audio.removeEventListener('play', handlePlay);
-      audio.removeEventListener('pause', handlePause);
-    };
-  }, [currentIndex, queue]);
-
-  // Handle Background Mode + Media Metadata
-  useEffect(() => {
-    if (Capacitor.isNativePlatform()) {
-      const initBackgroundMode = async () => {
-        try {
-          const status = await BackgroundMode.checkPermissions();
-          if (status.display !== 'granted') {
-            await BackgroundMode.requestPermissions();
-          }
-          BackgroundMode.enable();
-          BackgroundMode.setSettings({
-            title: currentSong ? (currentSong.title || 'US Music') : 'US Music',
-            text: currentSong ? (currentSong.artist || 'Playing audio') : 'Playing audio',
-            resume: true,
-            hidden: false,
-          });
-          BackgroundMode.on('activate', () => {
-            BackgroundMode.disableWebViewOptimizations(); 
-          });
-        } catch (err) {}
-      };
-      initBackgroundMode();
+      if (listener && typeof listener.remove === 'function') {
+        listener.remove();
+      }
     }
-  }, [currentSong]);
+  }, [currentIndex, queue]);
 
   // Cleanup
   useEffect(() => {
     return () => {
-      if (hlsRef.current) hlsRef.current.destroy();
       if (nativeSyncIntervalRef.current) clearInterval(nativeSyncIntervalRef.current);
-      if (Capacitor.isNativePlatform()) {
-         NativeAudio.unload({ assetId: 'currentSong' }).catch(() => {});
-      } else {
-         audioRef.current.pause();
-      }
+      NativeAudio.unload({ assetId: 'currentSong' }).catch(() => {});
     };
   }, []);
 
@@ -347,21 +235,6 @@ export function PlayerProvider({ children }) {
   useEffect(() => {
     if (currentSong) {
       localStorage.setItem('us-music-currentSong', JSON.stringify(currentSong));
-      
-      if ('mediaSession' in navigator && !Capacitor.isNativePlatform()) {
-        navigator.mediaSession.metadata = new MediaMetadata({
-          title: currentSong.title || 'Unknown Title',
-          artist: currentSong.artist || 'Unknown Artist',
-          album: currentSong.album || 'Unknown Album',
-          artwork: [
-            {
-              src: currentSong.thumbnail || currentSong.coverUrl || 'https://via.placeholder.com/512',
-              sizes: '512x512',
-              type: 'image/jpeg',
-            },
-          ],
-        });
-      }
     }
   }, [currentSong]);
 
@@ -377,9 +250,6 @@ export function PlayerProvider({ children }) {
 
   useEffect(() => {
     localStorage.setItem('us-music-volume', volume.toString());
-    if (!Capacitor.isNativePlatform()) {
-      audioRef.current.volume = volume;
-    }
   }, [volume]);
 
   // MediaSession Action Handlers
