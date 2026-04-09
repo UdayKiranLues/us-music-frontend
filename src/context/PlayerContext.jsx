@@ -1,6 +1,8 @@
 import { createContext, useContext, useState, useRef, useEffect } from 'react';
 import Hls from 'hls.js';
 import axios, { getBaseURL } from '../utils/axios';
+import { Capacitor } from '@capacitor/core';
+import { BackgroundMode } from '@anuradev/capacitor-background-mode';
 
 const PlayerContext = createContext();
 
@@ -403,6 +405,27 @@ export function PlayerProvider({ children }) {
     audio.addEventListener('ended', handleEnded);
     audio.addEventListener('play', handlePlay);
     audio.addEventListener('pause', handlePause);
+
+    // Initialize Foreground Service for continuous playback
+    if (Capacitor.isNativePlatform()) {
+      try {
+        BackgroundMode.enable();
+        BackgroundMode.setSettings({
+          title: 'US Music',
+          text: 'Playing audio in the background',
+          resume: true,
+          hidden: false,
+          color: 'ff0000',
+        });
+        
+        // Ensure webview doesn't pause Javascript execution when backgrounded
+        BackgroundMode.on('activate', () => {
+          BackgroundMode.disableWebViewOptimizations(); 
+        });
+      } catch (err) {
+        console.error('Failed to init BackgroundMode', err);
+      }
+    }
 
     return () => {
       audio.removeEventListener('timeupdate', handleTimeUpdate);
