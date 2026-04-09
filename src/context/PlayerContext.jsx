@@ -406,25 +406,39 @@ export function PlayerProvider({ children }) {
     audio.addEventListener('play', handlePlay);
     audio.addEventListener('pause', handlePause);
 
-    // Initialize Foreground Service for continuous playback
+    // Initialize Foreground Service for continuous playback safely with Android 13+ permissions
     if (Capacitor.isNativePlatform()) {
-      try {
-        BackgroundMode.enable();
-        BackgroundMode.setSettings({
-          title: 'US Music',
-          text: 'Playing audio in the background',
-          resume: true,
-          hidden: false,
-          color: 'ff0000',
-        });
-        
-        // Ensure webview doesn't pause Javascript execution when backgrounded
-        BackgroundMode.on('activate', () => {
-          BackgroundMode.disableWebViewOptimizations(); 
-        });
-      } catch (err) {
-        console.error('Failed to init BackgroundMode', err);
-      }
+      const initBackgroundMode = async () => {
+        try {
+          // Android 13+ strictly requires POST_NOTIFICATIONS permission
+          const status = await BackgroundMode.checkPermissions();
+          if (status.display !== 'granted') {
+            const request = await BackgroundMode.requestPermissions();
+            if (request.display !== 'granted') {
+              console.warn('⚠️ Background Mode notification permission denied. Audio may pause in background.');
+              return;
+            }
+          }
+
+          BackgroundMode.enable();
+          BackgroundMode.setSettings({
+            title: 'US Music',
+            text: 'Playing audio in the background',
+            resume: true,
+            hidden: false,
+            color: 'ff0000',
+          });
+          
+          // Ensure webview doesn't pause Javascript execution when backgrounded
+          BackgroundMode.on('activate', () => {
+            BackgroundMode.disableWebViewOptimizations(); 
+          });
+        } catch (err) {
+          console.error('❌ Failed to init BackgroundMode', err);
+        }
+      };
+      
+      initBackgroundMode();
     }
 
     return () => {
