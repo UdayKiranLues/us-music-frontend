@@ -293,12 +293,28 @@ export function PlayerProvider({ children }) {
   }, [currentIndex, playSong, queue]);
 
   const playPrevious = useCallback(() => {
+    if (currentTimeRef.current > 3) {
+      seekTo(0);
+      return;
+    }
+
     if (currentIndex > 0) {
       const prevIndex = currentIndex - 1;
       setCurrentIndex(prevIndex);
       playSong(queue[prevIndex]);
+      return;
     }
-  }, [currentIndex, playSong, queue]);
+
+    if (queue.length > 0) {
+      setCurrentIndex(0);
+      playSong(queue[0]);
+      return;
+    }
+
+    if (currentSong) {
+      playSong(currentSong, true, { startTime: 0, skipHistory: true });
+    }
+  }, [currentIndex, currentSong, playSong, queue, seekTo]);
 
   const addToQueue = (songs) => setQueue((prev) => [...prev, ...songs]);
 
