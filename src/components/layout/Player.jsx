@@ -15,6 +15,7 @@ const Player = () => {
     playNext,
     playPrevious,
     seekTo,
+    skipBy,
     changeVolume,
     // toggleFavorite,
     // isFavorite,
@@ -32,12 +33,13 @@ const Player = () => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const progressPercentage = (currentTime / duration) * 100 || 0;
+  const safeDuration = duration || currentSong.duration || 0;
+  const progressPercentage = (currentTime / safeDuration) * 100 || 0;
 
   const handleProgressClick = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const percent = (e.clientX - rect.left) / rect.width;
-    seekTo(percent * duration);
+    seekTo(percent * safeDuration);
   };
 
   const handleVolumeChange = (e) => {
@@ -75,7 +77,7 @@ const Player = () => {
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 100, opacity: 0 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="fixed bottom-0 left-0 right-0 z-50 glass-strong border-t border-white/10 shadow-2xl"
+        className="hidden lg:block fixed bottom-0 left-0 right-0 z-50 glass-strong border-t border-white/10 shadow-2xl"
         role="region"
         aria-label="Music player controls"
       >
@@ -88,8 +90,8 @@ const Player = () => {
             aria-label="Song progress"
             aria-valuenow={currentTime}
             aria-valuemin={0}
-            aria-valuemax={duration}
-            aria-valuetext={`${formatTime(currentTime)} of ${formatTime(duration)}`}
+            aria-valuemax={safeDuration}
+            aria-valuetext={`${formatTime(currentTime)} of ${formatTime(safeDuration)}`}
           >
             <motion.div
               className="h-full bg-gradient-to-r from-accent-orange via-accent-red to-accent-red rounded-full relative"
@@ -102,6 +104,16 @@ const Player = () => {
                 whileHover={{ scale: 1.2 }}
               />
             </motion.div>
+            <input
+              type="range"
+              min="0"
+              max={safeDuration || 1}
+              step="0.1"
+              value={Math.min(currentTime, safeDuration || currentTime || 0)}
+              onChange={(e) => seekTo(parseFloat(e.target.value))}
+              className="absolute inset-0 h-full w-full opacity-0 cursor-pointer"
+              aria-label="Seek position"
+            />
           </div>
 
           <div className="flex items-center justify-between gap-6">
@@ -142,6 +154,16 @@ const Player = () => {
             {/* Controls - Enhanced */}
             <div className="flex flex-col items-center gap-3 flex-1 max-w-xl">
               <div className="flex items-center gap-5">
+                <motion.button
+                  onClick={() => skipBy(-15)}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="text-gray-300 hover:text-white transition-colors p-2 text-xs font-semibold"
+                  aria-label="Back 15 seconds"
+                >
+                  -15s
+                </motion.button>
+
                 {/* TODO: Re-enable Shuffle when implemented
                 <motion.button
                   onClick={toggleShuffle}
@@ -224,6 +246,16 @@ const Player = () => {
                   </svg>
                 </motion.button>
 
+                <motion.button
+                  onClick={() => skipBy(15)}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="text-gray-300 hover:text-white transition-colors p-2 text-xs font-semibold"
+                  aria-label="Forward 15 seconds"
+                >
+                  +15s
+                </motion.button>
+
                 {/* TODO: Re-enable Repeat when implemented
                 <motion.button
                   onClick={cycleRepeatMode}
@@ -246,7 +278,7 @@ const Player = () => {
               <div className="flex items-center gap-3 text-xs text-gray-400 font-semibold w-full">
                 <span className="min-w-[40px] text-right">{formatTime(currentTime)}</span>
                 <div className="flex-1" />
-                <span className="min-w-[40px]">{formatTime(duration)}</span>
+                <span className="min-w-[40px]">{formatTime(safeDuration)}</span>
               </div>
             </div>
 

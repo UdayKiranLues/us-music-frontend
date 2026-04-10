@@ -5,9 +5,26 @@ import Player from './Player';
 import KeyboardShortcutsHelp from '@/components/common/KeyboardShortcutsHelp';
 import { motion } from 'framer-motion';
 import logo from '@/assets/us-logo.jpeg';
+import { usePlayer } from '@/context/PlayerContext';
+import MiniPlayer from '@/components/mobile/MiniPlayer';
+import MobilePlayer from '@/components/mobile/MobilePlayer';
+import BottomNav from '@/components/mobile/BottomNav';
 
 const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [mobilePlayerOpen, setMobilePlayerOpen] = useState(false);
+  const {
+    currentSong,
+    isPlaying,
+    currentTime,
+    duration,
+    progress,
+    togglePlayPause,
+    playNext,
+    playPrevious,
+    seekTo,
+    skipBy,
+  } = usePlayer();
 
   return (
     <div className="h-screen flex flex-col bg-gradient-premium">
@@ -47,6 +64,31 @@ const Layout = () => {
 
       {/* Player */}
       <Player />
+
+      <MiniPlayer
+        currentSong={currentSong}
+        isPlaying={isPlaying}
+        onPlayPause={togglePlayPause}
+        onExpand={() => setMobilePlayerOpen(true)}
+        progress={progress}
+      />
+
+      <MobilePlayer
+        isOpen={mobilePlayerOpen}
+        onClose={() => setMobilePlayerOpen(false)}
+        currentSong={currentSong}
+        isPlaying={isPlaying}
+        onPlayPause={togglePlayPause}
+        onNext={playNext}
+        onPrevious={playPrevious}
+        currentTime={currentTime}
+        duration={duration || currentSong?.duration || 0}
+        onSeek={seekTo}
+        onSeekBackward={() => skipBy(-15)}
+        onSeekForward={() => skipBy(15)}
+      />
+
+      <BottomNav />
       
       {/* Keyboard Shortcuts Help */}
       <KeyboardShortcutsHelp />

@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
-import { motion, useAnimation, PanInfo } from 'framer-motion';
+import { useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { useSwipeable } from 'react-swipeable';
 import {
   Play,
@@ -32,12 +32,12 @@ export default function MobilePlayer({
   currentTime = 0,
   duration = 0,
   onSeek,
+  onSeekBackward,
+  onSeekForward,
   onToggleFavorite,
   isFavorite = false,
 }) {
   const [isDragging, setIsDragging] = useState(false);
-  const controls = useAnimation();
-  const constraintsRef = useRef(null);
   const { coverUrl } = useSongCoverUrl(currentSong?._id, currentSong?.coverImageUrl || currentSong?.coverImage || currentSong?.coverUrl);
 
   const displayCoverUrl = useMemo(() => {
@@ -74,7 +74,8 @@ export default function MobilePlayer({
   };
 
   // Progress percentage
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const safeDuration = duration || currentSong?.duration || 0;
+  const progress = safeDuration > 0 ? (currentTime / safeDuration) * 100 : 0;
 
   if (!isOpen || !currentSong) return null;
 
@@ -165,8 +166,8 @@ export default function MobilePlayer({
             <input
               type="range"
               min="0"
-              max={duration || 100}
-              value={currentTime}
+              max={safeDuration || 1}
+              value={Math.min(currentTime, safeDuration || currentTime || 0)}
               onChange={(e) => onSeek && onSeek(parseFloat(e.target.value))}
               className="absolute inset-0 w-full opacity-0 cursor-pointer"
               style={{ zIndex: 10 }}
@@ -176,12 +177,20 @@ export default function MobilePlayer({
           {/* Time labels */}
           <div className="flex justify-between text-xs text-neutral-400">
             <span>{formatTime(currentTime)}</span>
-            <span>{formatTime(duration)}</span>
+            <span>{formatTime(safeDuration)}</span>
           </div>
         </div>
 
         {/* Controls */}
         <div className="flex items-center justify-center gap-4">
+          <button
+            onClick={onSeekBackward}
+            className="p-2 text-neutral-400 hover:text-white transition-colors text-xs font-semibold"
+            style={{ minWidth: mobile.touchTarget.min, minHeight: mobile.touchTarget.min }}
+          >
+            -15s
+          </button>
+
           {/* Shuffle */}
           <button
             className="p-2 text-neutral-400 hover:text-white transition-colors"
@@ -220,6 +229,14 @@ export default function MobilePlayer({
             style={{ minWidth: mobile.touchTarget.min, minHeight: mobile.touchTarget.min }}
           >
             <SkipForward size={32} fill="white" />
+          </button>
+
+          <button
+            onClick={onSeekForward}
+            className="p-2 text-neutral-400 hover:text-white transition-colors text-xs font-semibold"
+            style={{ minWidth: mobile.touchTarget.min, minHeight: mobile.touchTarget.min }}
+          >
+            +15s
           </button>
 
           {/* Repeat */}
