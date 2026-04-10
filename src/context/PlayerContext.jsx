@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useRef, useEffect } from 'react';
 import axios, { getBaseURL } from '../utils/axios';
 import { NativeAudio } from '@capgo/native-audio';
+import { BackgroundMode } from '@anuradev/capacitor-background-mode';
 
 const PlayerContext = createContext();
 
@@ -145,9 +146,43 @@ export function PlayerProvider({ children }) {
   };
 
   /**
+   * Initialize background audio modes for Android ExoPlayer
+   */
+  const initBackgroundMode = async () => {
+    try {
+      const status = await BackgroundMode.checkPermissions();
+      if (status.display !== 'granted') {
+        const req = await BackgroundMode.requestPermissions();
+        if (req.display !== 'granted') return;
+      }
+      
+      // THIS FLAG IS CRITICAL FOR EXOPLAYER BACKGROUND SURVIVAL
+      await NativeAudio.configure({
+        backgroundPlayback: true,
+        focus: true,
+        showNotification: false // Foreground service creates its own via BackgroundMode
+      }).catch(console.error);
+
+      BackgroundMode.enable();
+      BackgroundMode.setSettings({
+        title: currentSong ? (currentSong.title || 'US Music') : 'US Music',
+        text: currentSong ? (currentSong.artist || 'US Music') : 'US Music',
+        resume: true,
+        hidden: false
+      });
+      BackgroundMode.on('activate', () => {
+        BackgroundMode.disableWebViewOptimizations();
+      });
+    } catch (e) {
+      console.error('Background mode init failed', e);
+    }
+  };
+
+  /**
    * Sync native progress
    */
   const startNativeSync = () => {
+     initBackgroundMode();
      if (nativeSyncIntervalRef.current) clearInterval(nativeSyncIntervalRef.current);
      nativeSyncIntervalRef.current = setInterval(async () => {
         try {
