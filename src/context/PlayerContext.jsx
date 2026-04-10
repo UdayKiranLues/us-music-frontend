@@ -50,6 +50,40 @@ export function PlayerProvider({ children }) {
   const [streamUrl, setStreamUrl] = useState(null);
 
   const nativeSyncIntervalRef = useRef(null);
+  const backgroundModeEnabledRef = useRef(false);
+  const backgroundListenersRef = useRef([]);
+
+  const getArtworkUrl = (song) => {
+    if (!song) return undefined;
+
+    const cover =
+      song.coverUrl ||
+      song.coverImageUrl ||
+      song.coverImage ||
+      song.artworkUrl;
+
+    if (!cover) return undefined;
+
+    try {
+      return new URL(cover, getBaseURL()).toString();
+    } catch {
+      return cover;
+    }
+  };
+
+  const getNotificationMetadata = (song) => ({
+    title: song?.title || 'US Music',
+    artist: song?.artist || 'Unknown Artist',
+    album: song?.album || 'US Music',
+    artworkUrl: getArtworkUrl(song),
+  });
+
+  const stopNativeSync = () => {
+    if (nativeSyncIntervalRef.current) {
+      clearInterval(nativeSyncIntervalRef.current);
+      nativeSyncIntervalRef.current = null;
+    }
+  };
 
   /**
    * Fetch secure streaming URL from backend
@@ -111,10 +145,12 @@ export function PlayerProvider({ children }) {
         assetPath: playbackStreamUrl,
         isUrl: true,
         audioChannelNum: 1,
-        volume: volume
+        volume: volume,
+        notificationMetadata: getNotificationMetadata(song),
       });
       
       if (autoPlay) {
+        await ensureBackgroundPlaybackReady(song);
         await NativeAudio.play({ assetId: 'currentSong' });
         setIsPlaying(true);
         startNativeSync();
@@ -137,9 +173,12 @@ export function PlayerProvider({ children }) {
     if (isPlaying) {
       await NativeAudio.pause({ assetId: 'currentSong' }).catch(() => {});
       setIsPlaying(false);
-      if (nativeSyncIntervalRef.current) clearInterval(nativeSyncIntervalRef.current);
+      stopNativeSync();
     } else {
-      await NativeAudio.play({ assetId: 'currentSong' }).catch(() => {});
+      await ensureBackgroundPlaybackReady(currentSong);
+      await NativeAudio.resume({ assetId: 'currentSong' }).catch(async () => {
+        await NativeAudio.play({ assetId: 'currentSong' }).catch(() => {});
+      });
       setIsPlaying(true);
       startNativeSync();
     }
@@ -148,31 +187,35 @@ export function PlayerProvider({ children }) {
   /**
    * Initialize background audio modes for Android ExoPlayer
    */
-  const initBackgroundMode = async () => {
+  const ensureBackgroundPlaybackReady = async (song = currentSong) => {
     try {
-      const status = await BackgroundMode.checkPermissions();
-      if (status.display !== 'granted') {
-        const req = await BackgroundMode.requestPermissions();
-        if (req.display !== 'granted') return;
+      const status = await BackgroundMode.checkNotificationsPermission().catch(() => null);
+      if (status && status.notifications !== 'granted') {
+        await BackgroundMode.requestNotificationsPermission().catch(() => null);
       }
-      
-      // THIS FLAG IS CRITICAL FOR EXOPLAYER BACKGROUND SURVIVAL
+
       await NativeAudio.configure({
         backgroundPlayback: true,
+        background: true,
         focus: true,
-        showNotification: false // Foreground service creates its own via BackgroundMode
+        showNotification: true,
       }).catch(console.error);
 
-      BackgroundMode.enable();
-      BackgroundMode.setSettings({
-        title: currentSong ? (currentSong.title || 'US Music') : 'US Music',
-        text: currentSong ? (currentSong.artist || 'US Music') : 'US Music',
+      const notificationSettings = {
+        title: song?.title || 'US Music',
+        text: song?.artist || 'Playing music',
+        channelName: 'Music playback',
+        channelDescription: 'Keeps audio playing in the background',
         resume: true,
-        hidden: false
-      });
-      BackgroundMode.on('activate', () => {
-        BackgroundMode.disableWebViewOptimizations();
-      });
+        hidden: false,
+      };
+
+      if (!backgroundModeEnabledRef.current) {
+        await BackgroundMode.enable(notificationSettings).catch(console.error);
+        backgroundModeEnabledRef.current = true;
+      } else {
+        await BackgroundMode.updateNotification(notificationSettings).catch(console.error);
+      }
     } catch (e) {
       console.error('Background mode init failed', e);
     }
@@ -182,8 +225,8 @@ export function PlayerProvider({ children }) {
    * Sync native progress
    */
   const startNativeSync = () => {
-     initBackgroundMode();
-     if (nativeSyncIntervalRef.current) clearInterval(nativeSyncIntervalRef.current);
+     ensureBackgroundPlaybackReady();
+     stopNativeSync();
      nativeSyncIntervalRef.current = setInterval(async () => {
         try {
            const timeObj = await NativeAudio.getCurrentTime({ assetId: 'currentSong' });
@@ -202,7 +245,7 @@ export function PlayerProvider({ children }) {
    * Seek to position
    */
   const seekTo = async (time) => {
-    await NativeAudio.play({ assetId: 'currentSong', time: time }).catch(()=>{});
+    await NativeAudio.setCurrentTime({ assetId: 'currentSong', time }).catch(() => {});
     setCurrentTime(time);
   };
 
@@ -244,7 +287,8 @@ export function PlayerProvider({ children }) {
   useEffect(() => {
     let listener = null;
     const setupListener = async () => {
-      listener = await NativeAudio.addListener('complete', () => {
+      listener = await NativeAudio.addListener('complete', ({ assetId }) => {
+        if (assetId !== 'currentSong') return;
         setIsPlaying(false);
         playNext();
       });
@@ -260,8 +304,44 @@ export function PlayerProvider({ children }) {
 
   // Cleanup
   useEffect(() => {
+    let cancelled = false;
+
+    const setupBackgroundListeners = async () => {
+      const backgroundListener = await BackgroundMode.addListener('appInBackground', () => {
+        BackgroundMode.disableWebViewOptimizations().catch(() => {});
+      }).catch(() => null);
+
+      const foregroundListener = await BackgroundMode.addListener('appInForeground', () => {
+        BackgroundMode.enableWebViewOptimizations().catch(() => {});
+      }).catch(() => null);
+
+      if (cancelled) {
+        await backgroundListener?.remove?.().catch(() => {});
+        await foregroundListener?.remove?.().catch(() => {});
+        return;
+      }
+
+      backgroundListenersRef.current = [backgroundListener, foregroundListener].filter(Boolean);
+    };
+
+    setupBackgroundListeners();
+
     return () => {
-      if (nativeSyncIntervalRef.current) clearInterval(nativeSyncIntervalRef.current);
+      cancelled = true;
+      backgroundListenersRef.current.forEach((listener) => {
+        listener?.remove?.().catch(() => {});
+      });
+      backgroundListenersRef.current = [];
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      stopNativeSync();
+      if (backgroundModeEnabledRef.current) {
+        BackgroundMode.disable().catch(() => {});
+        backgroundModeEnabledRef.current = false;
+      }
       NativeAudio.unload({ assetId: 'currentSong' }).catch(() => {});
     };
   }, []);
@@ -287,9 +367,18 @@ export function PlayerProvider({ children }) {
     localStorage.setItem('us-music-volume', volume.toString());
   }, [volume]);
 
+  useEffect(() => {
+    if (currentSong && isPlaying) {
+      ensureBackgroundPlaybackReady(currentSong);
+    }
+  }, [currentSong, isPlaying]);
+
   // MediaSession Action Handlers
   useEffect(() => {
     if ('mediaSession' in navigator) {
+      if (currentSong) {
+        navigator.mediaSession.metadata = new MediaMetadata(getNotificationMetadata(currentSong));
+      }
       navigator.mediaSession.setActionHandler('play', togglePlayPause);
       navigator.mediaSession.setActionHandler('pause', togglePlayPause);
       navigator.mediaSession.setActionHandler('previoustrack', playPrevious);
