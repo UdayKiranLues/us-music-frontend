@@ -97,6 +97,22 @@ export function PlayerProvider({ children }) {
     }
   };
 
+  const getNativePlaybackState = useCallback(async () => {
+    const preloadState = await NativeAudio.isPreloaded({ assetId: PLAYER_ASSET_ID }).catch(() => ({ found: false }));
+    if (!preloadState?.found) {
+      return {
+        isLoaded: false,
+        isPlaying: false,
+      };
+    }
+
+    const playingState = await NativeAudio.isPlaying({ assetId: PLAYER_ASSET_ID }).catch(() => ({ isPlaying: false }));
+    return {
+      isLoaded: true,
+      isPlaying: Boolean(playingState?.isPlaying),
+    };
+  }, []);
+
   useEffect(() => {
     currentTimeRef.current = currentTime;
   }, [currentTime]);
@@ -231,10 +247,11 @@ export function PlayerProvider({ children }) {
     if (!currentSong) return;
 
     const songId = getSongId(currentSong);
-    const preloadState = await NativeAudio.isPreloaded({ assetId: PLAYER_ASSET_ID }).catch(() => ({ found: false }));
-    const isLoaded = loadedAssetRef.current.songId === songId && preloadState?.found;
+    const nativeState = await getNativePlaybackState();
+    const isLoaded = loadedAssetRef.current.songId === songId && nativeState.isLoaded;
+    const actuallyPlaying = nativeState.isPlaying;
 
-    if (!isLoaded && !isPlaying) {
+    if (!isLoaded && !actuallyPlaying) {
       await playSong(currentSong, true, {
         startTime: currentTimeRef.current,
         skipHistory: true,
@@ -246,10 +263,9 @@ export function PlayerProvider({ children }) {
       await ensureSongAssetLoaded(currentSong);
     }
 
-    if (isPlaying) {
+    if (actuallyPlaying) {
       await NativeAudio.pause({ assetId: PLAYER_ASSET_ID }).catch(() => {});
       setIsPlaying(false);
-      stopNativeSync();
     } else {
       await ensureBackgroundPlaybackReady(currentSong);
       await NativeAudio.resume({ assetId: PLAYER_ASSET_ID }).catch(async () => {
@@ -258,7 +274,7 @@ export function PlayerProvider({ children }) {
       setIsPlaying(true);
       startNativeSync();
     }
-  }, [currentSong, ensureBackgroundPlaybackReady, ensureSongAssetLoaded, getSongId, isPlaying, playSong]);
+  }, [currentSong, ensureBackgroundPlaybackReady, ensureSongAssetLoaded, getNativePlaybackState, getSongId, playSong]);
 
   /**
    * Initialize background audio modes for Android ExoPlayer
@@ -306,12 +322,15 @@ export function PlayerProvider({ children }) {
      stopNativeSync();
      nativeSyncIntervalRef.current = setInterval(async () => {
         try {
+           const nativeState = await getNativePlaybackState();
+           setIsPlaying(nativeState.isPlaying);
+
            const durObj = await NativeAudio.getDuration({ assetId: PLAYER_ASSET_ID }).catch(() => null);
            if (durObj && durObj.duration) {
               setDuration(durObj.duration);
            }
         } catch (e) {}
-     }, 5000);
+     }, 1000);
   };
 
   /**
