@@ -58,6 +58,12 @@ export function PlayerProvider({ children }) {
   const currentTimeRef = useRef(currentTime);
   const lastNativeProgressRef = useRef(0);
   const stallRecoveringRef = useRef(false);
+  const loadedAssetRef = useRef({
+    songId: null,
+    streamUrl: null,
+  });
+
+  const getSongId = useCallback((song) => song?._id || song?.id || null, []);
 
   const getArtworkUrl = (song) => {
     if (!song) return undefined;
@@ -135,13 +141,53 @@ export function PlayerProvider({ children }) {
     }
   }, []);
 
+  const ensureSongAssetLoaded = useCallback(async (song) => {
+    if (!song) {
+      throw new Error('Invalid song');
+    }
+
+    const songId = getSongId(song);
+    if (!songId) {
+      throw new Error('Missing ID');
+    }
+
+    const { songId: loadedSongId, streamUrl: loadedStreamUrl } = loadedAssetRef.current;
+    const preloadState = await NativeAudio.isPreloaded({ assetId: PLAYER_ASSET_ID }).catch(() => ({ found: false }));
+
+    if (loadedSongId === songId && preloadState?.found && loadedStreamUrl) {
+      setStreamUrl(loadedStreamUrl);
+      return loadedStreamUrl;
+    }
+
+    const playbackStreamUrl = await fetchSecureStreamUrl(songId);
+
+    await NativeAudio.unload({ assetId: PLAYER_ASSET_ID }).catch(() => {});
+
+    await NativeAudio.preload({
+      assetId: PLAYER_ASSET_ID,
+      assetPath: playbackStreamUrl,
+      isUrl: true,
+      audioChannelNum: 1,
+      volume: volume,
+      notificationMetadata: getNotificationMetadata(song),
+    });
+
+    loadedAssetRef.current = {
+      songId,
+      streamUrl: playbackStreamUrl,
+    };
+
+    setStreamUrl(playbackStreamUrl);
+    return playbackStreamUrl;
+  }, [fetchSecureStreamUrl, getSongId, volume]);
+
   /**
    * Play song via Native ExoPlayer
    */
   const playSong = useCallback(async (song, autoPlay = true, options = {}) => {
     try {
       if (!song) throw new Error('Invalid song');
-      const songId = song._id || song.id;
+      const songId = getSongId(song);
       if (!songId) throw new Error('Missing ID');
       const {
         startTime = 0,
@@ -149,19 +195,7 @@ export function PlayerProvider({ children }) {
       } = options;
 
       setCurrentSong(song);
-      const playbackStreamUrl = await fetchSecureStreamUrl(songId);
-
-      // Unload previous
-      await NativeAudio.unload({ assetId: PLAYER_ASSET_ID }).catch(() => {});
-      
-      await NativeAudio.preload({
-        assetId: PLAYER_ASSET_ID,
-        assetPath: playbackStreamUrl,
-        isUrl: true,
-        audioChannelNum: 1,
-        volume: volume,
-        notificationMetadata: getNotificationMetadata(song),
-      });
+      await ensureSongAssetLoaded(song);
 
       setDuration(song.duration || 0);
       setCurrentTime(startTime || 0);
@@ -181,17 +215,35 @@ export function PlayerProvider({ children }) {
       }
     } catch (error) {
       console.error('❌ Failed to play song:', error.message);
+      loadedAssetRef.current = {
+        songId: null,
+        streamUrl: null,
+      };
+      setStreamUrl(null);
       setIsPlaying(false);
     }
-  }, [ensureBackgroundPlaybackReady, fetchSecureStreamUrl, volume]);
+  }, [ensureBackgroundPlaybackReady, ensureSongAssetLoaded, getSongId]);
 
   /**
    * Play/Pause toggle
    */
   const togglePlayPause = useCallback(async () => {
-    if (currentSong && !streamUrl) {
-      await playSong(currentSong, true);
+    if (!currentSong) return;
+
+    const songId = getSongId(currentSong);
+    const preloadState = await NativeAudio.isPreloaded({ assetId: PLAYER_ASSET_ID }).catch(() => ({ found: false }));
+    const isLoaded = loadedAssetRef.current.songId === songId && preloadState?.found;
+
+    if (!isLoaded && !isPlaying) {
+      await playSong(currentSong, true, {
+        startTime: currentTimeRef.current,
+        skipHistory: true,
+      });
       return;
+    }
+
+    if (!isLoaded) {
+      await ensureSongAssetLoaded(currentSong);
     }
 
     if (isPlaying) {
@@ -206,7 +258,7 @@ export function PlayerProvider({ children }) {
       setIsPlaying(true);
       startNativeSync();
     }
-  }, [currentSong, ensureBackgroundPlaybackReady, isPlaying, playSong, streamUrl]);
+  }, [currentSong, ensureBackgroundPlaybackReady, ensureSongAssetLoaded, getSongId, isPlaying, playSong]);
 
   /**
    * Initialize background audio modes for Android ExoPlayer
@@ -265,12 +317,24 @@ export function PlayerProvider({ children }) {
   /**
    * Seek to position
    */
-  const seekTo = async (time) => {
+  const seekTo = useCallback(async (time) => {
+    if (!currentSong) return;
+
     const clampedTime = Math.max(0, Math.min(time, duration || currentSong?.duration || time));
+    const preloadState = await NativeAudio.isPreloaded({ assetId: PLAYER_ASSET_ID }).catch(() => ({ found: false }));
+
+    if (loadedAssetRef.current.songId !== getSongId(currentSong) || !preloadState?.found) {
+      await playSong(currentSong, isPlaying, {
+        startTime: clampedTime,
+        skipHistory: true,
+      });
+      return;
+    }
+
     await NativeAudio.setCurrentTime({ assetId: PLAYER_ASSET_ID, time: clampedTime }).catch(() => {});
     setCurrentTime(clampedTime);
     lastNativeProgressRef.current = Date.now();
-  };
+  }, [currentSong, duration, getSongId, isPlaying, playSong]);
 
   /**
    * Change volume
@@ -280,39 +344,39 @@ export function PlayerProvider({ children }) {
     await NativeAudio.setVolume({ assetId: PLAYER_ASSET_ID, volume: newVolume }).catch(()=>{});
   };
 
-  const skipBy = useCallback((delta) => {
-    seekTo(currentTimeRef.current + delta);
+  const skipBy = useCallback(async (delta) => {
+    await seekTo(currentTimeRef.current + delta);
   }, [seekTo]);
 
-  const playNext = useCallback(() => {
+  const playNext = useCallback(async () => {
     if (currentIndex < queue.length - 1) {
       const nextIndex = currentIndex + 1;
       setCurrentIndex(nextIndex);
-      playSong(queue[nextIndex]);
+      await playSong(queue[nextIndex]);
     }
   }, [currentIndex, playSong, queue]);
 
-  const playPrevious = useCallback(() => {
+  const playPrevious = useCallback(async () => {
     if (currentTimeRef.current > 3) {
-      seekTo(0);
+      await seekTo(0);
       return;
     }
 
     if (currentIndex > 0) {
       const prevIndex = currentIndex - 1;
       setCurrentIndex(prevIndex);
-      playSong(queue[prevIndex]);
+      await playSong(queue[prevIndex]);
       return;
     }
 
     if (queue.length > 0) {
       setCurrentIndex(0);
-      playSong(queue[0]);
+      await playSong(queue[0]);
       return;
     }
 
     if (currentSong) {
-      playSong(currentSong, true, { startTime: 0, skipHistory: true });
+      await playSong(currentSong, true, { startTime: 0, skipHistory: true });
     }
   }, [currentIndex, currentSong, playSong, queue, seekTo]);
 
@@ -333,7 +397,7 @@ export function PlayerProvider({ children }) {
       listener = await NativeAudio.addListener('complete', ({ assetId }) => {
         if (assetId !== PLAYER_ASSET_ID) return;
         setIsPlaying(false);
-        playNext();
+        void playNext();
       });
     };
     setupListener();
@@ -405,6 +469,10 @@ export function PlayerProvider({ children }) {
         BackgroundMode.disable().catch(() => {});
         backgroundModeEnabledRef.current = false;
       }
+      loadedAssetRef.current = {
+        songId: null,
+        streamUrl: null,
+      };
       NativeAudio.unload({ assetId: PLAYER_ASSET_ID }).catch(() => {});
     };
   }, []);
