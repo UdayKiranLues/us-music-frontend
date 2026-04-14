@@ -35,15 +35,16 @@ export default function MobilePlayer({
   onPrevious,
   currentTime = 0,
   duration = 0,
+  volume = 0.7,
   onSeek,
   onSeekBackward,
   onSeekForward,
+  onVolumeChange,
   onToggleFavorite,
   isFavorite = false,
 }) {
   const [shuffleMode, setShuffleMode] = useState(false);
   const [repeatMode, setRepeatMode] = useState('off'); // off, one, all
-  const [volume, setVolume] = useState(70);
   const [showQueue, setShowQueue] = useState(false);
   
   const { coverUrl } = useSongCoverUrl(currentSong?._id, currentSong?.coverImageUrl || currentSong?.coverImage || currentSong?.coverUrl);
@@ -322,6 +323,24 @@ export default function MobilePlayer({
           </motion.button>
         </div>
 
+        {/* SEEK CONTROLS - explicit 15s skip buttons */}
+        <div className="flex items-center justify-center gap-4 px-6 pb-5">
+          <button
+            onClick={onSeekBackward}
+            className="px-4 py-2 rounded-full bg-white/5 text-sm font-semibold text-neutral-200 hover:bg-white/10 transition-colors"
+            aria-label="Back 15 seconds"
+          >
+            -15s
+          </button>
+          <button
+            onClick={onSeekForward}
+            className="px-4 py-2 rounded-full bg-white/5 text-sm font-semibold text-neutral-200 hover:bg-white/10 transition-colors"
+            aria-label="Forward 15 seconds"
+          >
+            +15s
+          </button>
+        </div>
+
         {/* SECONDARY CONTROLS - Actions and settings */}
         <div className="flex items-center justify-between px-6 pb-4 border-t border-white/5 pt-4">
           {/* Like/Favorite */}
@@ -367,7 +386,7 @@ export default function MobilePlayer({
           <div className="flex items-center gap-2 px-3 bg-white/5 rounded-full">
             <button
               className="p-2 text-neutral-400 hover:text-white transition-colors"
-              onClick={() => setVolume(volume === 0 ? 50 : 0)}
+              onClick={() => onVolumeChange?.(volume === 0 ? 0.5 : 0)}
               style={{ minWidth: mobile.touchTarget.min, minHeight: mobile.touchTarget.min }}
               aria-label="Toggle mute"
             >
@@ -376,9 +395,10 @@ export default function MobilePlayer({
             <input
               type="range"
               min="0"
-              max="100"
+              max="1"
+              step="0.01"
               value={volume}
-              onChange={(e) => setVolume(parseFloat(e.target.value))}
+              onChange={(e) => onVolumeChange?.(parseFloat(e.target.value))}
               className="w-16 h-1 bg-neutral-600 rounded-full appearance-none cursor-pointer"
               aria-label="Volume"
             />

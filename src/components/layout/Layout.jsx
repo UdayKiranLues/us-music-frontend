@@ -18,12 +18,14 @@ const Layout = () => {
     isPlaying,
     currentTime,
     duration,
+    volume,
     progress,
     togglePlayPause,
     playNext,
     playPrevious,
     seekTo,
     skipBy,
+    changeVolume,
   } = usePlayer();
 
   return (
@@ -83,9 +85,11 @@ const Layout = () => {
         onPrevious={playPrevious}
         currentTime={currentTime}
         duration={duration || currentSong?.duration || 0}
+        volume={volume}
         onSeek={seekTo}
         onSeekBackward={() => skipBy(-15)}
         onSeekForward={() => skipBy(15)}
+        onVolumeChange={changeVolume}
       />
 
       <BottomNav />
