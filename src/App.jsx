@@ -5,6 +5,7 @@ import { ToastProvider, useToast } from '@/context/ToastContext';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import RoleRoute from '@/components/auth/RoleRoute';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { usePlayerInitialization, useBackgroundState } from '@/hooks/usePlayerInitialization';
 import { useEffect } from 'react';
 import Layout from '@/components/layout/Layout';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -38,6 +39,10 @@ import PodcastStudio from '@/pages/artist/PodcastStudio';
 import ChangeUsername from '@/pages/settings/ChangeUsername';
 
 function AppContent() {
+  // Initialize player and request permissions on app startup
+  usePlayerInitialization();
+  useBackgroundState();
+
   // Enable global keyboard shortcuts
   useKeyboardShortcuts();
 

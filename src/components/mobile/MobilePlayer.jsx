@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSwipeable } from 'react-swipeable';
 import {
@@ -46,12 +46,30 @@ export default function MobilePlayer({
   const [shuffleMode, setShuffleMode] = useState(false);
   const [repeatMode, setRepeatMode] = useState('off'); // off, one, all
   const [showQueue, setShowQueue] = useState(false);
+  const [isPlayPauseLoading, setIsPlayPauseLoading] = useState(false); // Track play/pause button state
   
   const { coverUrl } = useSongCoverUrl(currentSong?._id, currentSong?.coverImageUrl || currentSong?.coverImage || currentSong?.coverUrl);
 
   const displayCoverUrl = useMemo(() => {
     return getImageUrl(coverUrl || currentSong?.coverImageUrl || currentSong?.coverImage || currentSong?.coverUrl) || 'https://placehold.co/400';
   }, [coverUrl, currentSong?.coverImageUrl, currentSong?.coverImage, currentSong?.coverUrl]);
+
+  // Debounced play/pause handler
+  const handlePlayPauseClick = useCallback(async () => {
+    if (isPlayPauseLoading) {
+      console.warn('⚠️ Play/pause already in progress...');
+      return;
+    }
+
+    setIsPlayPauseLoading(true);
+    try {
+      await onPlayPause?.();
+    } catch (error) {
+      console.error('Play/pause error:', error);
+    } finally {
+      setIsPlayPauseLoading(false);
+    }
+  }, [onPlayPause, isPlayPauseLoading]);
 
 
   // Swipe handlers
@@ -270,15 +288,25 @@ export default function MobilePlayer({
 
           {/* Play/Pause - Main control */}
           <motion.button
-            onClick={onPlayPause}
-            className="w-20 h-20 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-2xl text-white"
-            whileTap={{ scale: 0.92 }}
-            whileHover={{ scale: 1.08 }}
-            animate={isPlaying ? { scale: [1, 1.02, 1] } : {}}
-            transition={isPlaying ? { duration: 2, repeat: Infinity } : {}}
+            onClick={handlePlayPauseClick}
+            disabled={isPlayPauseLoading}
+            className={`w-20 h-20 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-2xl text-white ${
+              isPlayPauseLoading ? 'opacity-70' : ''
+            }`}
+            whileTap={{ scale: isPlayPauseLoading ? 1 : 0.92 }}
+            whileHover={{ scale: isPlayPauseLoading ? 1 : 1.08 }}
+            animate={isPlaying && !isPlayPauseLoading ? { scale: [1, 1.02, 1] } : {}}
+            transition={isPlaying && !isPlayPauseLoading ? { duration: 2, repeat: Infinity } : {}}
             aria-label={isPlaying ? 'Pause' : 'Play'}
+            title={isPlayPauseLoading ? 'Updating...' : isPlaying ? 'Pause' : 'Play'}
           >
-            {isPlaying ? (
+            {isPlayPauseLoading ? (
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                className="w-6 h-6 border-2 border-white border-t-transparent rounded-full"
+              />
+            ) : isPlaying ? (
               <Pause size={40} fill="white" stroke="white" />
             ) : (
               <Play size={40} fill="white" stroke="white" className="ml-2" />

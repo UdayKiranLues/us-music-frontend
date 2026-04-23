@@ -215,22 +215,38 @@ export function PlayerProvider({ children }) {
   }, []);
 
   /**
-   * Play song via Native ExoPlayer
+   * Play song via Native ExoPlayer - Enhanced with better error handling
    */
   const playSong = useCallback(async (song, autoPlay = true, options = {}) => {
     try {
       if (!song) throw new Error('Invalid song');
       const songId = getSongId(song);
       if (!songId) throw new Error('Missing ID');
+      
       const {
         startTime = 0,
         skipHistory = false,
       } = options;
 
+      console.log(`🎵 playSong: id=${songId}, title="${song.title}", duration=${song.duration}, startTime=${startTime}`);
+
+      // Validate duration
+      if (!song.duration || song.duration < 1) {
+        console.warn(`⚠️ Invalid duration for song: ${song.duration}s. This might cause playback issues.`);
+      }
+
       setCurrentSong(song);
       await ensureSongAssetLoaded(song);
 
-      setDuration(Math.max(Number(song.duration) || 0, Number(durationRef.current) || 0));
+      // Ensure we have a valid duration
+      const songDuration = Math.max(Number(song.duration) || 0, Number(durationRef.current) || 0);
+      if (songDuration > 0) {
+        setDuration(songDuration);
+        console.log(`✅ Duration set to: ${songDuration}s`);
+      } else {
+        console.warn('⚠️ No valid duration found for song');
+      }
+
       setCurrentTime(startTime || 0);
       
       if (autoPlay) {
@@ -238,9 +254,13 @@ export function PlayerProvider({ children }) {
         await NativeAudio.play({
           assetId: PLAYER_ASSET_ID,
           time: startTime || 0,
+        }).catch((err) => {
+          console.error('❌ Native play failed:', err.message);
+          throw err;
         });
         setIsPlaying(true);
         startNativeSync(song);
+        console.log(`✅ Started playing: ${song.title}`);
       }
 
       if (!skipHistory) {
@@ -254,6 +274,7 @@ export function PlayerProvider({ children }) {
       };
       setStreamUrl(null);
       setIsPlaying(false);
+      throw error; // Re-throw for caller to handle
     }
   }, [ensureBackgroundPlaybackReady, ensureSongAssetLoaded, getSongId]);
 
@@ -268,40 +289,84 @@ export function PlayerProvider({ children }) {
   }, [playSong]);
 
   /**
-   * Play/Pause toggle
+   * Play/Pause toggle - Improved with immediate UI feedback
    */
   const togglePlayPause = useCallback(async () => {
-    if (!currentSong) return;
+    try {
+      if (!currentSong) {
+        console.warn('⚠️ togglePlayPause: No current song');
+        return;
+      }
 
-    const songId = getSongId(currentSong);
-    const nativeState = await getNativePlaybackState();
-    const isLoaded = loadedAssetRef.current.songId === songId && nativeState.isLoaded;
-    const actuallyPlaying = nativeState.isPlaying;
+      const songId = getSongId(currentSong);
+      console.log(`🎮 togglePlayPause: songId=${songId}, currentlyPlaying=${isPlaying}`);
 
-    if (!isLoaded && !actuallyPlaying) {
-      await playSong(currentSong, true, {
-        startTime: currentTimeRef.current,
-        skipHistory: true,
-      });
-      return;
+      const nativeState = await getNativePlaybackState();
+      const isLoaded = loadedAssetRef.current.songId === songId && nativeState.isLoaded;
+      
+      // Immediately update UI state for responsive feedback
+      const targetPlayingState = !isPlaying;
+      setIsPlaying(targetPlayingState);
+
+      // If not loaded, need to load and play
+      if (!isLoaded) {
+        console.log('📥 Loading song asset...');
+        await ensureSongAssetLoaded(currentSong);
+        
+        if (targetPlayingState) {
+          await ensureBackgroundPlaybackReady(currentSong);
+          await NativeAudio.play({ 
+            assetId: PLAYER_ASSET_ID,
+            time: currentTimeRef.current 
+          }).catch((err) => {
+            console.error('❌ Failed to play loaded song:', err.message);
+            setIsPlaying(false); // Revert UI on error
+            throw err;
+          });
+          startNativeSync(currentSong);
+        }
+        return;
+      }
+
+      // If currently playing, pause it
+      if (nativeState.isPlaying) {
+        console.log('⏸️  Pausing...');
+        await NativeAudio.pause({ assetId: PLAYER_ASSET_ID }).catch((err) => {
+          console.error('❌ Failed to pause:', err.message);
+          setIsPlaying(true); // Revert UI on error
+          throw err;
+        });
+      } else {
+        // If paused, resume it
+        console.log('▶️  Resuming...');
+        await ensureBackgroundPlaybackReady(currentSong);
+        
+        try {
+          await NativeAudio.resume({ assetId: PLAYER_ASSET_ID });
+          console.log('✅ Resumed successfully');
+        } catch (resumeErr) {
+          console.warn('Resume failed, falling back to play:', resumeErr.message);
+          // Fallback: use play instead of resume if resume fails
+          await NativeAudio.play({ 
+            assetId: PLAYER_ASSET_ID,
+            time: currentTimeRef.current 
+          }).catch((playErr) => {
+            console.error('❌ Fallback play also failed:', playErr.message);
+            setIsPlaying(false); // Revert UI on error
+            throw playErr;
+          });
+        }
+        startNativeSync(currentSong);
+      }
+
+      console.log(`✅ togglePlayPause completed: now ${targetPlayingState ? 'playing' : 'paused'}`);
+    } catch (error) {
+      console.error('❌ togglePlayPause error:', error.message);
+      // Ensure UI state matches reality after error
+      const nativeState = await getNativePlaybackState();
+      setIsPlaying(nativeState.isPlaying);
     }
-
-    if (!isLoaded) {
-      await ensureSongAssetLoaded(currentSong);
-    }
-
-    if (actuallyPlaying) {
-      await NativeAudio.pause({ assetId: PLAYER_ASSET_ID }).catch(() => {});
-      setIsPlaying(false);
-    } else {
-      await ensureBackgroundPlaybackReady(currentSong);
-      await NativeAudio.resume({ assetId: PLAYER_ASSET_ID }).catch(async () => {
-        await NativeAudio.play({ assetId: PLAYER_ASSET_ID }).catch(() => {});
-      });
-      setIsPlaying(true);
-      startNativeSync(currentSong);
-    }
-  }, [currentSong, ensureBackgroundPlaybackReady, ensureSongAssetLoaded, getNativePlaybackState, getSongId, playSong]);
+  }, [currentSong, isPlaying, ensureBackgroundPlaybackReady, ensureSongAssetLoaded, getNativePlaybackState, getSongId, playSong]);
 
   /**
    * Initialize background audio modes for Android ExoPlayer
@@ -342,11 +407,14 @@ export function PlayerProvider({ children }) {
   }
 
   /**
-   * Sync native progress
+   * Sync native progress - Enhanced with better state tracking
    */
   const startNativeSync = (song = currentSongRef.current) => {
      ensureBackgroundPlaybackReady(song);
      stopNativeSync();
+     
+     let consecutiveStallCount = 0;
+     
      nativeSyncIntervalRef.current = setInterval(async () => {
         try {
            const nativeState = await getNativePlaybackState();
@@ -362,30 +430,81 @@ export function PlayerProvider({ children }) {
            if (nextDuration > 0) {
               setDuration(nextDuration);
            }
-        } catch (e) {}
+
+           // Detect stalled playback (no progress for 3+ seconds while playing)
+           if (nativeState.isPlaying) {
+             const timeSinceLastUpdate = Date.now() - lastNativeProgressRef.current;
+             if (timeSinceLastUpdate > 3000) {
+               consecutiveStallCount++;
+               if (consecutiveStallCount >= 2 && !stallRecoveringRef.current) {
+                 console.warn(`⚠️ Playback stalled detected (${consecutiveStallCount}x), attempting recovery...`);
+                 stallRecoveringRef.current = true;
+                 try {
+                   await resumeCurrentSong(currentTimeRef.current);
+                 } catch (err) {
+                   console.error('Recovery failed:', err.message);
+                 } finally {
+                   stallRecoveringRef.current = false;
+                   consecutiveStallCount = 0;
+                 }
+               }
+             } else {
+               consecutiveStallCount = 0;
+             }
+           } else {
+             consecutiveStallCount = 0;
+           }
+        } catch (e) {
+          console.error('Sync error:', e.message);
+        }
      }, 1000);
   };
 
   /**
-   * Seek to position
+   * Seek to position - Enhanced with validation and recovery
    */
   const seekTo = useCallback(async (time) => {
-    if (!currentSong) return;
+    try {
+      if (!currentSong) {
+        console.warn('⚠️ seekTo: No current song');
+        return;
+      }
 
-    const clampedTime = Math.max(0, Math.min(time, duration || currentSong?.duration || time));
-    const preloadState = await NativeAudio.isPreloaded({ assetId: PLAYER_ASSET_ID }).catch(() => ({ found: false }));
+      const maxDuration = duration || currentSong?.duration || 0;
+      const clampedTime = Math.max(0, Math.min(time, maxDuration));
+      
+      console.log(`⏩ seekTo: ${clampedTime.toFixed(2)}s of ${maxDuration}s`);
 
-    if (loadedAssetRef.current.songId !== getSongId(currentSong) || !preloadState?.found) {
-      await playSong(currentSong, isPlaying, {
-        startTime: clampedTime,
-        skipHistory: true,
+      const preloadState = await NativeAudio.isPreloaded({ assetId: PLAYER_ASSET_ID }).catch(() => ({ found: false }));
+
+      if (loadedAssetRef.current.songId !== getSongId(currentSong) || !preloadState?.found) {
+        console.log('📥 Song not loaded for seeking, loading now...');
+        await playSong(currentSong, isPlaying, {
+          startTime: clampedTime,
+          skipHistory: true,
+        });
+        return;
+      }
+
+      // Set position in native player
+      await NativeAudio.setCurrentTime({ 
+        assetId: PLAYER_ASSET_ID, 
+        time: clampedTime 
+      }).catch((err) => {
+        console.error('❌ setCurrentTime failed:', err.message);
+        throw err;
       });
-      return;
-    }
 
-    await NativeAudio.setCurrentTime({ assetId: PLAYER_ASSET_ID, time: clampedTime }).catch(() => {});
-    setCurrentTime(clampedTime);
-    lastNativeProgressRef.current = Date.now();
+      // Update local state
+      setCurrentTime(clampedTime);
+      lastNativeProgressRef.current = Date.now();
+      
+      console.log(`✅ Seeked to ${clampedTime.toFixed(2)}s`);
+    } catch (error) {
+      console.error('❌ seekTo error:', error.message);
+      // Still try to update local state if seek fails
+      setCurrentTime(Math.max(0, Math.min(time, duration || 0)));
+    }
   }, [currentSong, duration, getSongId, isPlaying, playSong]);
 
   /**
